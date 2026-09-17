@@ -1,0 +1,319 @@
+import {
+  STORAGE_KEY,
+  loadFromStorage,
+  saveToStorage,
+} from "./storage.model.js";
+import { TIME_MANAGER_EVENTS, eventBus } from "@/services/event-bus.service.js";
+import { formatDate, generateId, todayISO } from "@/utils/helpers.js";
+
+import { NoteModel } from "./note.model.js";
+import { SoundModel } from "./sound.model.js";
+
+export const DEFAULT_SETTINGS = {
+  pomodoroWorkTime: 25,
+  shortBreakTime: 5,
+  longBreakTime: 15,
+  longBreakInterval: 4,
+  autoStartBreaks: false,
+  autoStartPomodoros: false,
+  disableBreaks: false,
+  flowBreakTime: 15,
+  autoStartFlowBreaks: false,
+  volume: 50,
+  pomodoroEndSound: "none",
+  breakEndSound: "none",
+  currentSoundId: "none",
+  notificationSound: true,
+};
+
+export const state = {
+  currentView: "mind",
+  activeTaskId: null,
+  activeMode: "pomodoro",
+  mind: {
+    isRunning: false,
+    isPaused: false,
+    mindemaining: 25 * 60,
+    duration: 25 * 60,
+    flowTime: 0,
+    pomodoroSessionCount: 0,
+    currentPhase: "work",
+  },
+  tasks: [],
+  sessions: [],
+  notes: [],
+  settings: { ...DEFAULT_SETTINGS },
+};
+
+const listeners = new Set();
+let isInitialized = false;
+
+export const StateManager = {
+  _rawCache: "",
+
+  init() {
+    if (isInitialized) return state;
+
+    this.reloadFromStorage(false);
+    this.setupReactiveEngine();
+
+    isInitialized = true;
+    return state;
+  },
+
+  reloadFromStorage(notify = true) {
+    const saved = loadFromStorage();
+    if (saved) {
+      state.activeMode = saved.activeMode || "pomodoro";
+      state.tasks = saved.tasks || [];
+      state.sessions = saved.sessions || [];
+      state.notes = saved.notes || [];
+      state.activeTaskId = saved.activeTaskId || null;
+
+      if (saved.settings) {
+        state.settings = {
+          ...DEFAULT_SETTINGS,
+          ...saved.settings,
+          pomodoroEndSound:
+            saved.settings.pomodoroEndSound ??
+            DEFAULT_SETTINGS.pomodoroEndSound,
+          breakEndSound:
+            saved.settings.breakEndSound ?? DEFAULT_SETTINGS.breakEndSound,
+          longBreakInterval:
+            Number(saved.settings.longBreakInterval) ||
+            DEFAULT_SETTINGS.longBreakInterval,
+        };
+        SoundModel.init(state.settings);
+      } else {
+        SoundModel.init(DEFAULT_SETTINGS);
+      }
+
+      if (saved.mind) {
+        state.mind = { ...state.mind, ...saved.mind };
+      }
+    } else {
+      SoundModel.init(DEFAULT_SETTINGS);
+    }
+
+    const hasActiveTask = state.tasks.some(
+      (t) => String(t.id) === String(state.activeTaskId),
+    );
+    if (!hasActiveTask) {
+      const firstTask = state.tasks.find((t) => t.status !== "done");
+      state.activeTaskId = firstTask ? String(firstTask.id) : null;
+    }
+
+    this._rawCache = localStorage.getItem(STORAGE_KEY) || "";
+
+    if (notify) {
+      this.notify();
+      this.dispatchStateEvents();
+    }
+  },
+
+  dispatchStateEvents() {
+    eventBus.emit(TIME_MANAGER_EVENTS.TASKS_CHANGED, state.tasks);
+    eventBus.emit(TIME_MANAGER_EVENTS.NOTES_CHANGED, state.notes);
+    eventBus.emit(TIME_MANAGER_EVENTS.SESSIONS_CHANGED, state.sessions);
+    eventBus.emit(TIME_MANAGER_EVENTS.SETTINGS_CHANGED, state.settings);
+    eventBus.emit(TIME_MANAGER_EVENTS.mind_CHANGED, state.mind);
+
+    const currentSoundId = state.settings.currentSoundId || "none";
+    const volume = state.settings.volume ?? 50;
+
+    eventBus.emit(TIME_MANAGER_EVENTS.SOUND_TRACK_CHANGED, currentSoundId);
+    eventBus.emit(TIME_MANAGER_EVENTS.SOUND_VOLUME_CHANGED, volume);
+    eventBus.emit(TIME_MANAGER_EVENTS.SOUND_CHANGED, {
+      currentSoundId,
+      volume,
+      soundState: SoundModel.getState(),
+    });
+
+    eventBus.emit(TIME_MANAGER_EVENTS.STORE_CHANGED, state);
+  },
+
+  setupReactiveEngine() {
+    window.addEventListener("storage", (event) => {
+      if (event.key === STORAGE_KEY) {
+        this.reloadFromStorage(true);
+      }
+    });
+
+    setInterval(() => {
+      const currentRaw = localStorage.getItem(STORAGE_KEY) || "";
+      if (currentRaw !== this._rawCache) {
+        this._rawCache = currentRaw;
+        this.reloadFromStorage(true);
+      }
+    }, 300);
+  },
+
+  getState() {
+    return state;
+  },
+
+  subscribe(listener) {
+    if (typeof listener === "function") {
+      listeners.add(listener);
+    }
+    return () => listeners.delete(listener);
+  },
+
+  notify() {
+    listeners.forEach((listener) => listener(state));
+  },
+
+  setView(view) {
+    state.currentView = view;
+    this.notify();
+  },
+
+  setMode(mode) {
+    if (state.activeMode === mode) return;
+    state.activeMode = mode;
+
+    if (mode === "pomodoro" || mode === "flow") {
+      state.mind.currentPhase = "work";
+    }
+
+    this.save();
+  },
+
+  getTodaySessions() {
+    const today = todayISO();
+    return state.sessions.filter((session) => {
+      const sessionDate = formatDate(session.completedAt);
+      return sessionDate === today;
+    });
+  },
+
+  getTodayOverview() {
+    const todaySessions = this.getTodaySessions();
+    const sessionsDone = todaySessions.length;
+    const totalSeconds = todaySessions.reduce(
+      (acc, s) => acc + (s.durationSeconds || 0),
+      0,
+    );
+    const totalMinutes = Math.round(totalSeconds / 60);
+
+    return { sessionsDone, totalMinutes };
+  },
+
+  updateMindState(newMindState) {
+    state.mind = { ...state.mind, ...newMindState };
+    this.save();
+  },
+
+  updateSettings(newSettings = {}) {
+    state.settings = {
+      ...state.settings,
+      ...newSettings,
+      longBreakInterval:
+        Number(newSettings.longBreakInterval) ||
+        state.settings.longBreakInterval ||
+        4,
+    };
+
+    if (
+      !state.mind.isRunning &&
+      !state.mind.isPaused &&
+      state.mind.currentPhase === "work"
+    ) {
+      const workSecs = (state.settings.pomodoroWorkTime || 25) * 60;
+      state.mind.mindemaining = workSecs;
+      state.mind.duration = workSecs;
+    }
+
+    this.save();
+  },
+
+  resetMind() {
+    const defaultSecs = (state.settings.pomodoroWorkTime || 25) * 60;
+    state.mind.isRunning = false;
+    state.mind.isPaused = false;
+
+    if (state.activeMode === "pomodoro") {
+      state.mind.mindemaining = defaultSecs;
+      state.mind.duration = defaultSecs;
+      state.mind.currentPhase = "work";
+    } else if (state.activeMode === "flow") {
+      state.mind.flowTime = 0;
+      state.mind.currentPhase = "work";
+    }
+
+    this.save();
+  },
+
+  resetToDefaults() {
+    state.settings = { ...DEFAULT_SETTINGS };
+    state.tasks = [];
+    state.sessions = [];
+    state.notes = [];
+    state.activeTaskId = null;
+    state.activeMode = "pomodoro";
+
+    const defaultSecs = DEFAULT_SETTINGS.pomodoroWorkTime * 60;
+    state.mind = {
+      isRunning: false,
+      isPaused: false,
+      mindemaining: defaultSecs,
+      duration: defaultSecs,
+      flowTime: 0,
+      pomodoroSessionCount: 0,
+      currentPhase: "work",
+    };
+
+    SoundModel.reset();
+    NoteModel.reset();
+
+    this.save();
+
+    window.dispatchEvent(new CustomEvent("notesChanged"));
+  },
+
+  addSession(sessionData = {}) {
+    const activeTask = state.tasks.find(
+      (t) => String(t.id) === String(state.activeTaskId),
+    );
+    const session = {
+      id: generateId(),
+      taskId: sessionData.taskId || state.activeTaskId || null,
+      taskTitle:
+        sessionData.taskTitle ||
+        (activeTask ? activeTask.title : "Untitled Session"),
+      type: sessionData.type || state.activeMode,
+      durationSeconds: sessionData.durationSeconds || 0,
+      completedAt: todayISO(),
+    };
+
+    state.sessions.push(session);
+
+    this.save();
+  },
+
+  save() {
+    const soundData = SoundModel.getCurrentTrack();
+    const soundId = soundData ? soundData.id : "none";
+
+    state.settings = {
+      ...state.settings,
+      currentSoundId: soundId,
+      volume: SoundModel.getState().volume,
+      isMuted: SoundModel.getState().isMuted,
+    };
+
+    saveToStorage({
+      activeMode: state.activeMode,
+      activeTaskId: state.activeTaskId,
+      tasks: state.tasks,
+      sessions: state.sessions,
+      notes: state.notes,
+      mind: state.mind,
+      settings: state.settings,
+    });
+
+    this._rawCache = localStorage.getItem(STORAGE_KEY) || "";
+    this.notify();
+    this.dispatchStateEvents();
+  },
+};
