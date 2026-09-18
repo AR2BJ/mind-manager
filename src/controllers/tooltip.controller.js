@@ -1,4 +1,4 @@
-const TOOLTIP_ID = "time-mobile-tooltip";
+const TOOLTIP_ID = "plan-mobile-tooltip";
 
 function removeTooltip() {
   const existing = document.getElementById(TOOLTIP_ID);

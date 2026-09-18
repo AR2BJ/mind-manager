@@ -11,18 +11,14 @@ export const GlobalLoaderService = {
         class="fixed inset-0 z-200 flex items-center justify-center bg-background/50 backdrop-blur-xl opacity-0 pointer-events-none transition-opacity duration-300 ease-in-out"
       >
         <div
-          class="flex flex-col items-center gap-15 p-8 rounded-3xl transform scale-95 transition-transform duration-300 backdrop-blur-xl"
+          class="flex flex-col items-center gap-5 p-8 rounded-3xl transform scale-95 transition-transform duration-300 backdrop-blur-xl"
           id="global-loader-modal"
         >
           <div class="relative flex items-center justify-center">
-            <div class="loader">
-              <span class="hour"></span>
-              <span class="min"></span>
-              <span class="circel"></span>
-            </div>
+            <div class="chaotic-orbit"></div>
           </div>
 
-          <div class="flex flex-col items-center gap-1 text-center">
+          <div class="mt-15 flex flex-col items-center gap-1 text-center">
             <h3
               class="text-base sm:text-lg font-bold text-color tracking-tight"
             >

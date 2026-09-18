@@ -1,3 +1,4 @@
+
 export function setTheme(mode) {
   const root = document.documentElement;
 

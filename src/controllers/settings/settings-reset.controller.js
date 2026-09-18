@@ -1,20 +1,21 @@
 import { StateManager, state } from "@/models/state.model.js";
 
-import { GlobalLoaderService } from "@/services/loader.service.js";
-import { MindController } from "../mind.controller";
-import { NoteController } from "../note.controller";
-import { NoteModel } from "@/models/note.model";
-import { NoteService } from "@/services/note.service";
+import { GlobalLoaderService } from "@/services/loader.service";
+import { MindController } from "../mind.controller.js";
 import { NotificationService } from "@/services/notification.service.js";
 import { STORAGE_KEY } from "@/models/storage.model.js";
-import { SoundModel } from "@/models/sound.model.js";
-import { soundService } from "@/services/sound.service.js";
+import { renderMindList } from "@/views/mind/mind-list.renderer.js";
 
 export const SettingsResetController = {
   keydownHandler: null,
 
   init() {
     this.initResetModalEvents();
+  },
+
+  resetSession() {
+    StateManager.init();
+    MindController.refreshUI();
   },
 
   closeResetModal() {
@@ -44,6 +45,7 @@ export const SettingsResetController = {
       this.executeApplicationReset();
     });
 
+    // Keydown handler for reset modal
     if (this.keydownHandler) {
       document.removeEventListener("keydown", this.keydownHandler);
     }
@@ -69,16 +71,18 @@ export const SettingsResetController = {
 
   executeApplicationReset() {
     const previousPayload = localStorage.getItem(STORAGE_KEY);
-
-    const previousState = {
-      tasks: (state.tasks || []).map((t) => ({ ...t })),
-      notes: (state.notes || []).map((t) => ({ ...t })),
-      sessions: (state.sessions || []).map((s) => ({ ...s })),
-      settings: { ...state.settings },
-      activeMode: state.activeMode,
-      activeTaskId: state.activeTaskId,
-      mind: { ...state.mind },
-    };
+    const previousNotes = StateManager.getNotes().map((note) => ({ ...note }));
+    const previousSnippets = StateManager.getSnippets().map((snippet) => ({
+      ...snippet,
+    }));
+    const previousBookmarks = StateManager.getBookmarks().map((bookmark) => ({
+      ...bookmark,
+    }));
+    const previousCheatSheets = StateManager.getCheatSheets().map(
+      (cheatsheet) => ({
+        ...cheatsheet,
+      }),
+    );
 
     this.closeResetModal();
 
@@ -86,16 +90,25 @@ export const SettingsResetController = {
 
     setTimeout(() => {
       try {
-        StateManager.resetToDefaults();
-        soundService.stopAll();
+        localStorage.removeItem(STORAGE_KEY);
 
-        StateManager.setView("mind");
+        state.notes = [];
+        state.snippets = [];
+        state.bookmarks = [];
+        state.cheatsheets = [];
+        state.activeTab = "notes";
+        state.currentView = "mind";
+
+        renderMindList([], state.activeTab);
+
+        MindController.handleTabSwitch("notes");
+
         MindController.refreshUI();
 
         NotificationService.show({
           type: "error",
           message:
-            "Application synchronization storage and audio settings have been completely reset",
+            "Application synchronization storage has been completely cleared",
           duration: 5000,
           undoAction: () => {
             GlobalLoaderService.show(
@@ -105,24 +118,32 @@ export const SettingsResetController = {
               try {
                 if (previousPayload) {
                   localStorage.setItem(STORAGE_KEY, previousPayload);
+                } else {
+                  localStorage.removeItem(STORAGE_KEY);
                 }
 
-                state.tasks = previousState.tasks;
-                state.notes = previousState.notes;
-                state.sessions = previousState.sessions;
-                state.settings = previousState.settings;
-                state.activeMode = previousState.activeMode;
-                state.activeTaskId = previousState.activeTaskId;
-                state.mind = previousState.mind;
+                StateManager.save({
+                  notes: previousNotes || [],
+                  snippets: previousSnippets || [],
+                  bookmarks: previousBookmarks || [],
+                  cheatsheets: previousCheatSheets || [],
+                });
 
-                SoundModel.init(previousState.settings);
-                NoteService.restoreNotes(previousState.notes);
-                NoteController.init();
+                state.notes = previousNotes || [];
+                state.snippets = previousSnippets || [];
+                state.bookmarks = previousBookmarks || [];
+                state.cheatsheets = previousCheatSheets || [];
 
-                StateManager.setView("mind");
+                state.activeTab = "notes";
+                state.currentView = "mind";
 
-                StateManager.save();
-                StateManager.notify();
+                renderMindList(
+                  StateManager.getFilteredDataForActiveTab(),
+                  state.activeTab,
+                );
+
+                MindController.handleTabSwitch("notes");
+
                 MindController.refreshUI();
               } finally {
                 GlobalLoaderService.hide();

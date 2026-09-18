@@ -20,13 +20,33 @@ function getDaysInMonth(year, month) {
   return new Date(year, month + 1, 0).getDate();
 }
 
-function getSessionActivityMap(sessions) {
-  const map = {};
+function extractAllItems(
+  notes = [],
+  snippets = [],
+  bookmarks = [],
+  cheatsheets = [],
+) {
+  const safeNotes = Array.isArray(notes) ? notes : [];
+  const safeSnippets = Array.isArray(snippets) ? snippets : [];
+  const safeBookmarks = Array.isArray(bookmarks) ? bookmarks : [];
+  const safeCheatsheets = Array.isArray(cheatsheets) ? cheatsheets : [];
+  return [...safeNotes, ...safeSnippets, ...safeBookmarks, ...safeCheatsheets];
+}
 
-  sessions.forEach((session) => {
-    if (session.completedAt) {
-      const dateIso = session.completedAt;
-      map[dateIso] = (map[dateIso] || 0) + 1;
+function getActivityMap(
+  notes = [],
+  snippets = [],
+  bookmarks = [],
+  cheatsheets = [],
+) {
+  const map = {};
+  const allItems = extractAllItems(notes, snippets, bookmarks, cheatsheets);
+
+  allItems.forEach((item) => {
+    const dateStr = item?.createdAt || item?.updatedAt || item?.date;
+    if (dateStr) {
+      const isoKey = String(dateStr).split("T")[0];
+      map[isoKey] = (map[isoKey] || 0) + 1;
     }
   });
 
@@ -34,11 +54,22 @@ function getSessionActivityMap(sessions) {
 }
 
 export const AnalyticsAdapter = {
-  generateHeatmapSeries(sessions = [], view = "weekly") {
+  generateHeatmapSeries(
+    notes = [],
+    snippets = [],
+    bookmarks = [],
+    cheatsheets = [],
+    view = "weekly",
+  ) {
     let startDate = new Date();
-    if (sessions.length > 0) {
-      const validDates = sessions
-        .map((s) => (s.completedAt ? new Date(s.completedAt).getTime() : null))
+    const allItems = extractAllItems(notes, snippets, bookmarks, cheatsheets);
+
+    if (allItems.length > 0) {
+      const validDates = allItems
+        .map((item) => {
+          const d = item?.createdAt || item?.updatedAt || item?.date;
+          return d ? new Date(d).getTime() : null;
+        })
         .filter((time) => time && !isNaN(time));
 
       if (validDates.length > 0) {
@@ -54,12 +85,16 @@ export const AnalyticsAdapter = {
     const today = new Date();
     today.setHours(23, 59, 59, 999);
 
-    const globalActivityMap = getSessionActivityMap(sessions);
+    const globalActivityMap = getActivityMap(
+      notes,
+      snippets,
+      bookmarks,
+      cheatsheets,
+    );
 
-    // WEEKLY VIEW
     if (view === "weekly") {
       const startSaturday = new Date(startDate);
-      const dayOfWeek = startSaturday.getDay(); // 0=Sun, 6=Sat
+      const dayOfWeek = startSaturday.getDay();
       const offsetToSaturday = (dayOfWeek + 1) % 7;
       startSaturday.setDate(startDate.getDate() - offsetToSaturday);
 
@@ -87,7 +122,6 @@ export const AnalyticsAdapter = {
       });
     }
 
-    // MONTHLY VIEW
     if (view === "monthly") {
       const startMonth = startDate.getMonth();
       const startYear = startDate.getFullYear();
@@ -155,7 +189,6 @@ export const AnalyticsAdapter = {
       });
     }
 
-    // YEARLY VIEW
     if (view === "yearly") {
       const startYear = startDate.getFullYear();
       const endYear = today.getFullYear();
@@ -189,12 +222,19 @@ export const AnalyticsAdapter = {
     return [];
   },
 
-  generateWeekdayCounts(sessions = []) {
+  generateWeekdayCounts(
+    notes = [],
+    snippets = [],
+    bookmarks = [],
+    cheatsheets = [],
+  ) {
     const weekdayCounts = Array(7).fill(0);
+    const allItems = extractAllItems(notes, snippets, bookmarks, cheatsheets);
 
-    sessions.forEach((session) => {
-      if (session.completedAt) {
-        const dayIndex = new Date(session.completedAt).getDay();
+    allItems.forEach((item) => {
+      const dateStr = item?.createdAt || item?.updatedAt || item?.date;
+      if (dateStr) {
+        const dayIndex = new Date(dateStr).getDay();
         const shiftedIndex = (dayIndex + 1) % 7;
 
         if (shiftedIndex >= 0 && shiftedIndex <= 6) {
@@ -206,28 +246,122 @@ export const AnalyticsAdapter = {
     return weekdayCounts;
   },
 
+  generateModuleAnalytics(
+    notes = [],
+    snippets = [],
+    bookmarks = [],
+    cheatsheets = [],
+  ) {
+    const safeNotes = Array.isArray(notes) ? notes : [];
+    const safeSnippets = Array.isArray(snippets) ? snippets : [];
+    const safeBookmarks = Array.isArray(bookmarks) ? bookmarks : [];
+    const safeCheatsheets = Array.isArray(cheatsheets) ? cheatsheets : [];
+
+    return {
+      labels: ["Notes", "Snippets", "Bookmarks", "CheatSheets"],
+      series: [
+        safeNotes.length,
+        safeSnippets.length,
+        safeBookmarks.length,
+        safeCheatsheets.length,
+      ],
+    };
+  },
+
+  generateTagsAnalytics(
+    notes = [],
+    snippets = [],
+    bookmarks = [],
+    cheatsheets = [],
+  ) {
+    const allItems = extractAllItems(notes, snippets, bookmarks, cheatsheets);
+    const tagMap = {};
+
+    allItems.forEach((item) => {
+      if (Array.isArray(item?.tags)) {
+        item.tags.forEach((tag) => {
+          const cleanedTag = String(tag).trim();
+          if (cleanedTag) {
+            tagMap[cleanedTag] = (tagMap[cleanedTag] || 0) + 1;
+          }
+        });
+      }
+    });
+
+    const sortedTags = Object.entries(tagMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    const categories = sortedTags.map(([tag]) => tag);
+    const seriesData = sortedTags.map(([, count]) => count);
+
+    return {
+      categories: categories.length ? categories : ["No Tags"],
+      series: [
+        {
+          name: "Usage Count",
+          data: seriesData.length ? seriesData : [0],
+        },
+      ],
+    };
+  },
+
+  generateMetricsAnalytics(
+    notes = [],
+    snippets = [],
+    bookmarks = [],
+    cheatsheets = [],
+  ) {
+    const allItems = extractAllItems(notes, snippets, bookmarks, cheatsheets);
+
+    const categories = ["Total Items", "Favorite/Pinned", "Archived"];
+    let total = allItems.length;
+    let pinned = 0;
+    let archived = 0;
+
+    allItems.forEach((item) => {
+      if (item?.pinned || item?.isFavorite) pinned++;
+      if (item?.archived || item?.isArchived) archived++;
+    });
+
+    return {
+      categories,
+      series: [
+        {
+          name: "Items Count",
+          data: [total, pinned, archived],
+        },
+      ],
+    };
+  },
+
   getColorRanges(view, maxVal = 10, isDark = false) {
     const safeMax = Math.max(maxVal, 1);
 
     if (view === "yearly") {
       return [
-        { from: 0, to: 0, color: isDark ? "#1f2937" : "#e2e8f0", name: "none" },
+        {
+          from: 0,
+          to: 0,
+          color: isDark ? "#1f2937" : "#e2e8f0",
+          name: "none",
+        },
         {
           from: 1,
           to: Math.ceil(safeMax * 0.2),
-          color: isDark ? "#10b981" : "#93f3d3",
+          color: isDark ? "#064e3b" : "#dcfae9",
           name: "low",
         },
         {
           from: Math.ceil(safeMax * 0.2) + 1,
           to: Math.ceil(safeMax * 0.5),
-          color: isDark ? "#09704e" : "#72a795",
+          color: isDark ? "#047857" : "#9be9a8",
           name: "medium",
         },
         {
           from: Math.ceil(safeMax * 0.5) + 1,
           to: safeMax,
-          color: "#053d2a",
+          color: "#10b981",
           name: "high",
         },
       ];
@@ -236,31 +370,46 @@ export const AnalyticsAdapter = {
     if (view === "monthly") {
       const step = Math.max(1, Math.ceil(safeMax / 4));
       return [
-        { from: 0, to: 0, color: isDark ? "#111827" : "#f3f4f6", name: "none" },
+        {
+          from: 0,
+          to: 0,
+          color: isDark ? "#111827" : "#f3f4f6",
+          name: "none",
+        },
         {
           from: 1,
           to: step,
-          color: isDark ? "#10b981" : "#93f3d3",
+          color: isDark ? "#064e3b" : "#dcfae9",
           name: "low",
         },
         {
           from: step + 1,
           to: step * 2,
-          color: isDark ? "#09704e" : "#72a795",
+          color: isDark ? "#047857" : "#9be9a8",
           name: "medium",
         },
         {
           from: step * 2 + 1,
           to: safeMax,
-          color: "#053d2a",
+          color: "#10b981",
           name: "high",
         },
       ];
     }
 
     return [
-      { from: 0, to: 0, color: isDark ? "#1f2937" : "#e2e8f0", name: "none" },
-      { from: 1, to: safeMax, color: "#10b981", name: "active" },
+      {
+        from: 0,
+        to: 0,
+        color: isDark ? "#1f2937" : "#e2e8f0",
+        name: "none",
+      },
+      {
+        from: 1,
+        to: safeMax,
+        color: "#10b981",
+        name: "active",
+      },
     ];
   },
 };

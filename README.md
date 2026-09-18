@@ -1,12 +1,12 @@
 <div align="center">
-  <img src="/public/picture/demo.gif" alt="Time Manager Demo" width="100%" />
+  <img src="/public/picture/demo.gif" alt="Mind Manager Demo" width="100%" />
 </div>
 
 <br/>
 <br>
 
 <div align="center">
-  <img src="/public/picture/logo-2.png" alt="Time Manager Logo" height="145" />
+  <img src="/public/picture/logo-2.png" alt="Mind Manager Logo" height="145" />
 </div>
 
 <br/>
@@ -15,58 +15,66 @@
 <p align="center">
   <img alt="Vite" src="https://img.shields.io/badge/Vite-6.x-646CFF?style=flat-square&logo=vite" />
   <img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-ES2026-F7DF1E?style=flat-square&logo=javascript" />
-  <img alt="LocalStorage" src="https://img.shields.io/badge/Storage-LocalStorage-4FC3F7?style=flat-square" />
+  <img alt="Storage" src="https://img.shields.io/badge/Storage-LocalStorage-4FC3F7?style=flat-square" />
   <img alt="Responsive" src="https://img.shields.io/badge/Responsive-Desktop%20%26%20Mobile-34A853?style=flat-square" />
   <img alt="License" src="https://img.shields.io/badge/License-MIT-00599C?style=flat-square" />
 </p>
 
 <br/>
 
-# Time Manager
+# Mind Manager
 
-A lightweight productivity web app designed to help users focus on their tasks, manage work sessions, keep daily notes, and monitor their progress through a clean and responsive interface.
+A modern productivity-oriented planner web app for organizing tasks, managing daily commitments, reviewing activity, and tracking progress through a clean and responsive interface.
 
 ## Overview
 
-Time Manager is a frontend-only application built for personal productivity. It combines task management, a visual mind, notes, sound alerts, analytics, and settings into a single browser-based experience. All application data is stored locally in the browser using LocalStorage, which keeps the app fast, private, and independent from any backend service.
+Mind Manager is a frontend-only application focused on personal planning and daily organization. It gives users a structured way to create and manage plans, review them through a calendar and analytics view, and keep everything accessible without needing a backend service.
 
-## Features
+All user data is stored locally in the browser using `LocalStorage`, making the app fast, private, and easy to use.
 
-- Create, edit, complete, and delete tasks
-- Track active work with a focused mind workflow
-- View a daily overview of current tasks and progress
-- Add and manage personal notes
-- Customize sound alerts and volume
-- Review productivity data in an analytics dashboard
-- Switch themes and adjust app settings
+## Key Features
+
+- Create, edit, complete, and delete plans
+- Organize plans in a structured planner flow
+- View activity in a calendar-based overview
+- Track performance with analytics and reporting views
+- Use autocomplete and combobox-based inputs for faster planning
+- Customize theme and app settings
 - Import, export, and reset saved data
-- Use the app responsively on desktop and mobile screens
+- Works responsively on desktop and mobile screens
+- Store planning data locally for a lightweight personal workflow
 
 ## Core Functionalities
 
-### Mind and Focus Workflow
+### Planner and Plan Management
 
-The app includes a mind system with task-based focus sessions, start/pause/reset controls, and visual progress feedback. A flip-clock style display gives the mind a more polished and modern look.
+Users can manage daily plans through a dedicated planner interface with actions for:
 
-### Task Management
+- adding new plans
+- editing existing entries
+- deleting or completing plans
+- organizing plan-related actions and quick updates
 
-Users can manage tasks throughout the day by creating new items, updating existing ones, marking them complete, and viewing today’s workload in a dedicated overview panel.
+### Calendar View
 
-### Notes
+The app includes a calendar layer to help users review plans by date and time, making it easier to organize long-term routines and daily schedules.
 
-The project includes a note feature for storing short reminders, quick ideas, and daily planning information. Notes are persisted locally so they remain available across sessions.
+### Analytics Dashboard
 
-### Sound and Notifications
+The analytics section provides visual and summary-based insight into planning activity and progress. It helps users understand patterns in their workload and time usage.
 
-A sound system is included for mind completion alerts, with selectable sound options and volume control to personalize the experience.
+### Settings and Theme Control
 
-### Analytics
+The app includes configuration options for:
 
-The analytics section provides an overview of productivity-related activity, helping users review performance and identify task patterns.
+- theme switching
+- reset actions
+- import/export of saved state
+- general personal preference settings
 
-### Settings and Data Management
+### Auto-Logging and Productivity Support
 
-The app includes settings support for theme customization and data controls such as importing, exporting, and resetting stored state.
+The app includes productivity-related automation features such as automatic plan logging, helping reduce manual effort when tracking activity and progress.
 
 ## Technology Stack
 
@@ -80,31 +88,35 @@ The app includes settings support for theme customization and data controls such
 ## Project Structure
 
 ```text
-time-manager/
+mind-manager/
 ├── public/
 │   └── picture/
 ├── src/
 │   ├── app/
+│   │   ├── app.js
+│   │   └── theme.js
 │   ├── assets/
 │   │   ├── css/
 │   │   └── font/
 │   ├── components/
 │   │   ├── features/
 │   │   │   ├── analytics/
-│   │   │   ├── note/
-│   │   │   ├── settings/
-│   │   │   ├── sound/
-│   │   │   ├── tasks/
-│   │   │   └── mind/
+│   │   │   ├── planner/
+│   │   │   └── settings/
 │   │   ├── layout/
 │   │   ├── modals/
 │   │   ├── shared/
 │   │   └── ui/
 │   ├── controllers/
+│   │   ├── planner/
+│   │   └── settings/
 │   ├── models/
 │   ├── services/
 │   ├── utils/
 │   └── views/
+│       ├── analytics/
+│       ├── calendar/
+│       └── planner/
 ├── vendor/
 │   └── fontawesome/
 ├── index.html
@@ -119,21 +131,21 @@ time-manager/
 
 ## Architecture
 
-The app follows a modular frontend structure with responsibilities separated into clear areas:
+The project follows a modular frontend design with responsibilities separated into clear layers:
 
-- `app/` — app bootstrap and theme setup
-- `components/` — UI blocks and feature-specific interfaces
-- `controllers/` — event handling and coordination
-- `models/` — application state and persistence models
-- `services/` — mind, sound, theme, note, and storage logic
-- `views/` — rendering and presentation layers
-- `utils/` — helpers and adapters
+- `app/` — app bootstrap and global theme configuration
+- `components/` — UI blocks and feature-specific modules
+- `controllers/` — user interactions, event handling, and workflow logic
+- `models/` — state and storage definitions
+- `services/` — business logic, notifications, store access, and automation
+- `views/` — rendering layers for planner, calendar, and analytics
+- `utils/` — helper functions and constants
 
-This structure keeps the codebase easier to maintain, extend, and debug as the project grows.
+This structure keeps the codebase clean, maintainable, and easier to extend over time.
 
 ## Demo
 
-A visual demo is available in:
+A visual demonstration of the app is available in:
 
 ```text
 /public/picture/demo.gif
@@ -146,7 +158,7 @@ Clone the repository:
 
 ```bash
 git clone <repository-url>
-cd time-manager
+cd mind-manager
 ```
 
 Install dependencies:
@@ -178,39 +190,36 @@ npm run preview
 ## Usage
 
 1. Open the app in your browser.
-2. Create or select a task.
-3. Start the mind for a focused work session.
-4. Use your notes for reminders or quick planning.
-5. Adjust sound and volume preferences.
-6. Review analytics to monitor your activity.
-7. Customize settings and theme to match your workflow.
+2. Create your plans and commitments.
+3. Review them in the calendar and planner views.
+4. Use analytics to understand your progress and activity.
+5. Customize settings and theme based on your preference.
 
 ## Data Storage
 
-The app stores user data locally in the browser using `LocalStorage`, including:
+The application stores data locally in the browser using `LocalStorage`, including:
 
-- tasks
-- notes
-- settings
-- sound preferences
-- theme choice
+- plans
 - app state
+- settings
+- theme preferences
+- saved local data for planning workflow
 
 ## Roadmap
 
 Potential future improvements include:
 
-- richer analytics views and filters
-- recurring task support
-- drag-and-drop task organization
-- reminder notifications
-- more advanced data export/import tools
-- expanded theme and customization options
+- richer analytics and insights
+- advanced plan filtering and search
+- drag-and-drop plan organization
+- reminders and notifications
+- improved import/export workflows
+- expanded customization options
 
 ## License
 
-This project is licensed under the [MIT License](https://github.com/AR2BJ/time-manager/blob/dev/LICENSE).
+This project is licensed under the [MIT License](https://github.com/AR2BJ/mind-manager/blob/dev/LICENSE).
 
 ## Contributing
 
-Contributions are welcome. If you want to improve the mind flow, extend the analytics, add new features, or refine the architecture, feel free to open a pull request or submit an issue.
+Contributions are welcome. If you want to improve the planner UX, extend analytics, refine the calendar flow, or optimize the architecture, feel free to open a pull request or submit an issue.

@@ -1,66 +1,38 @@
-.loader {
-  width: 65px;
-  height: 65px;
-  border: 8px solid #00bba7a6;
-  border-radius: 50px;
+.chaotic-orbit {
+  --loader-size: 80px;
+  --loader-speed: 1.5s;
+  --loader-color: #00c950;
   position: relative;
-  transform: scale(2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--loader-size);
+  width: var(--loader-size);
+  animation: rotate936 calc(var(--loader-speed) * 1.667) infinite linear;
 }
 
-.loader span {
-  display: block;
-  background: #00bba7;
-}
-
-.loader .hour,
-.loader .min {
-  width: 6px;
-  height: 22px;
-  border-radius: 50px;
+.chaotic-orbit::before,
+.chaotic-orbit::after {
+  content: "";
   position: absolute;
-  top: 24.5px;
-  left: 21px;
-  animation: load9243 1.2s linear infinite;
-  transform-origin: top center;
+  height: 60%;
+  width: 60%;
+  border-radius: 50%;
+  background-color: var(--loader-color);
+  will-change: transform;
+  flex-shrink: 0;
 }
 
-.loader .min {
-  height: 17px;
-  animation: load9243 4s linear infinite;
+.chaotic-orbit::before {
+  animation: orbit var(--loader-speed) linear infinite;
 }
 
-.loader .circel {
-  width: 10px;
-  height: 10px;
-  border-radius: 50px;
-  position: absolute;
-  top: 19px;
-  left: 19px;
+.chaotic-orbit::after {
+  animation: orbit var(--loader-speed) linear calc(var(--loader-speed) / -2)
+    infinite;
 }
 
-/* 
-  // sound loader //
-*/
-
-.windows-loading-spinner {
-  box-sizing: border-box;
-  width: 1.5rem;
-  height: 1.5rem;
-  padding: 2px;
-  overflow: visible;
-}
-
-.windows-loading-spinner > circle {
-  stroke: #01d4bf;
-  fill: none;
-  stroke-width: 2px;
-  stroke-linecap: round;
-  transform-origin: 50% 50%;
-  transition: all 0.2s ease-in-out 0s;
-  animation: 2s linear 0s infinite normal none running loading-spinner;
-}
-
-@keyframes load9243 {
+@keyframes rotate936 {
   0% {
     transform: rotate(0deg);
   }
@@ -70,19 +42,109 @@
   }
 }
 
-@keyframes loading-spinner {
+@keyframes orbit {
   0% {
-    stroke-dasharray: 0.01px, 43.97px;
-    transform: rotate(0);
+    transform: translate(calc(var(--loader-size) * 0.5)) scale(0.73684);
+    opacity: 0.65;
+  }
+
+  5% {
+    transform: translate(calc(var(--loader-size) * 0.4)) scale(0.684208);
+    opacity: 0.58;
+  }
+
+  10% {
+    transform: translate(calc(var(--loader-size) * 0.3)) scale(0.631576);
+    opacity: 0.51;
+  }
+
+  15% {
+    transform: translate(calc(var(--loader-size) * 0.2)) scale(0.578944);
+    opacity: 0.44;
+  }
+
+  20% {
+    transform: translate(calc(var(--loader-size) * 0.1)) scale(0.526312);
+    opacity: 0.37;
+  }
+
+  25% {
+    transform: translate(0%) scale(0.47368);
+    opacity: 0.3;
+  }
+
+  30% {
+    transform: translate(calc(var(--loader-size) * -0.1)) scale(0.526312);
+    opacity: 0.37;
+  }
+
+  35% {
+    transform: translate(calc(var(--loader-size) * -0.2)) scale(0.578944);
+    opacity: 0.44;
+  }
+
+  40% {
+    transform: translate(calc(var(--loader-size) * -0.3)) scale(0.631576);
+    opacity: 0.51;
+  }
+
+  45% {
+    transform: translate(calc(var(--loader-size) * -0.4)) scale(0.684208);
+    opacity: 0.58;
   }
 
   50% {
-    stroke-dasharray: 21.99px, 21.99px;
-    transform: rotate(450deg);
+    transform: translate(calc(var(--loader-size) * -0.5)) scale(0.73684);
+    opacity: 0.65;
+  }
+
+  55% {
+    transform: translate(calc(var(--loader-size) * -0.4)) scale(0.789472);
+    opacity: 0.72;
+  }
+
+  60% {
+    transform: translate(calc(var(--loader-size) * -0.3)) scale(0.842104);
+    opacity: 0.79;
+  }
+
+  65% {
+    transform: translate(calc(var(--loader-size) * -0.2)) scale(0.894736);
+    opacity: 0.86;
+  }
+
+  70% {
+    transform: translate(calc(var(--loader-size) * -0.1)) scale(0.947368);
+    opacity: 0.93;
+  }
+
+  75% {
+    transform: translate(0%) scale(1);
+    opacity: 1;
+  }
+
+  80% {
+    transform: translate(calc(var(--loader-size) * 0.1)) scale(0.947368);
+    opacity: 0.93;
+  }
+
+  85% {
+    transform: translate(calc(var(--loader-size) * 0.2)) scale(0.894736);
+    opacity: 0.86;
+  }
+
+  90% {
+    transform: translate(calc(var(--loader-size) * 0.3)) scale(0.842104);
+    opacity: 0.79;
+  }
+
+  95% {
+    transform: translate(calc(var(--loader-size) * 0.4)) scale(0.789472);
+    opacity: 0.72;
   }
 
   100% {
-    stroke-dasharray: 0.01px, 43.97px;
-    transform: rotate(1080deg);
+    transform: translate(calc(var(--loader-size) * 0.5)) scale(0.73684);
+    opacity: 0.65;
   }
 }

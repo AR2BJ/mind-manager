@@ -1,6 +1,4 @@
-import "@/vendor/fontawesome/js/all";
-
-import { GlobalLoaderService } from "@/services/loader.service.js";
+import { GlobalLoaderService } from "@/services/loader.service";
 import { MindController } from "@/controllers/mind.controller.js";
 import { NavigationController } from "@/controllers/navigation.controller.js";
 import { SettingsController } from "@/controllers/settings.controller";
@@ -19,8 +17,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     GlobalLoaderService.init();
 
-    MindController.init();
     NavigationController.init();
+    MindController.init();
     SettingsController.init();
 
     TooltipController.init();
@@ -31,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => {
         loader.remove();
         app.classList.remove("hidden");
-        MindController.updateModeStyles(state.activeMode);
+        MindController.updateTabStyles(state.activeTab);
       }, 120);
     });
   }, 0);

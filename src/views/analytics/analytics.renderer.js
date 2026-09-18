@@ -1,20 +1,27 @@
 import { AnalyticsAdapter } from "@/utils/analytics.adapter.js";
-import { AnalyticsController } from "@/controllers/analytics.controller";
+import { AnalyticsController } from "@/controllers/analytics.controller.js";
 import ApexCharts from "apexcharts";
-import { DashboardComponent } from "@/components/features/analytics/dashboard.component";
+import { DashboardComponent } from "@/components/features/analytics/dashboard.component.js";
 
 let heatmapChartInstance = null;
-let barChartInstance = null;
-let activeHeatmapTab = "weekly";
+let weeklyChartInstance = null;
+let moduleDistChartInstance = null;
+let tagsChartInstance = null;
+let statusChartInstance = null;
+
 let resizeListenerAttached = false;
+let activeHeatmapTab = "weekly";
 
 const weekdayNames = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
 
-/**
- * Calculates and returns ApexCharts configuration options for Heatmap
- */
-function getHeatmapOptions(sessions, view) {
-  const heatmapSeries = AnalyticsAdapter.generateHeatmapSeries(sessions, view);
+function getHeatmapOptions(notes, snippets, bookmarks, cheatsheets, view) {
+  const heatmapSeries = AnalyticsAdapter.generateHeatmapSeries(
+    notes,
+    snippets,
+    bookmarks,
+    cheatsheets,
+    view,
+  );
   const isDark =
     document.documentElement.classList.contains("dark") ||
     localStorage.getItem("theme") === "dark";
@@ -22,7 +29,9 @@ function getHeatmapOptions(sessions, view) {
 
   const currentTabCounts = heatmapSeries.flatMap((s) => s.data.map((d) => d.y));
   let maxCommit = Math.max(1, ...currentTabCounts);
-  if (view === "weekly") maxCommit = Math.max(maxCommit, 4);
+  if (view === "weekly") {
+    maxCommit = Math.max(maxCommit, 4);
+  }
 
   const ranges = AnalyticsAdapter.getColorRanges(view, maxCommit, isDark);
 
@@ -34,7 +43,10 @@ function getHeatmapOptions(sessions, view) {
       height: 400,
       toolbar: { show: false },
       fontFamily: "inherit",
-      animations: { enabled: true, speed: 250 },
+      animations: {
+        enabled: true,
+        speed: 250,
+      },
     },
     dataLabels: { enabled: false },
     plotOptions: {
@@ -74,24 +86,31 @@ function getHeatmapOptions(sessions, view) {
     },
     tooltip: {
       theme: isDark ? "dark" : "light",
-      y: { formatter: (val) => `${val} sessions` },
+      y: {
+        formatter: (val) => `${val} created items`,
+      },
     },
   };
 }
 
-/**
- * Updates heatmap chart instance safely with new view settings
- */
-export function updateHeatmapChart(sessions, view) {
+export function updateHeatmapChart(
+  notes,
+  snippets,
+  bookmarks,
+  cheatsheets,
+  view,
+) {
   if (!heatmapChartInstance) return;
-
-  const newOptions = getHeatmapOptions(sessions, view);
+  const newOptions = getHeatmapOptions(
+    notes,
+    snippets,
+    bookmarks,
+    cheatsheets,
+    view,
+  );
   heatmapChartInstance.updateOptions(newOptions, true, true);
 }
 
-/**
- * Updates UI active tab indicator sliding animation & active states
- */
 export function updateTabStyles(tab) {
   activeHeatmapTab = tab;
 
@@ -111,12 +130,12 @@ export function updateTabStyles(tab) {
     tab === "monthly" ? btnMonthly : tab === "yearly" ? btnYearly : btnWeekly;
 
   buttons.forEach((btn) => {
-    btn.classList.remove("text-(--color-btn-primary-text)", "font-black");
+    btn.classList.remove("text-color", "font-black");
     btn.classList.add("text-secondary");
   });
 
   activeButton.classList.remove("text-secondary");
-  activeButton.classList.add("text-(--color-btn-primary-text)", "font-black");
+  activeButton.classList.add("text-color", "font-black");
 
   const switcherRect = switcher.getBoundingClientRect();
   const activeRect = activeButton.getBoundingClientRect();
@@ -140,10 +159,7 @@ function syncMobileMenuSelection(view) {
   });
 }
 
-/**
- * Binds desktop and mobile view tab click handlers
- */
-function bindAnalyticsControls(sessions) {
+function bindAnalyticsControls(notes, snippets, bookmarks, cheatsheets) {
   const switcher = document.getElementById("chart-view-switcher");
   if (switcher) {
     switcher.querySelectorAll("[data-view]").forEach((btn) => {
@@ -152,7 +168,7 @@ function bindAnalyticsControls(sessions) {
         const view = e.currentTarget.dataset.view;
         if (view && view !== activeHeatmapTab) {
           updateTabStyles(view);
-          updateHeatmapChart(sessions, view);
+          updateHeatmapChart(notes, snippets, bookmarks, cheatsheets, view);
         }
       });
     });
@@ -181,7 +197,7 @@ function bindAnalyticsControls(sessions) {
         const view = event.currentTarget.dataset.view;
         if (view && view !== activeHeatmapTab) {
           updateTabStyles(view);
-          updateHeatmapChart(sessions, view);
+          updateHeatmapChart(notes, snippets, bookmarks, cheatsheets, view);
         }
         mobileMenu.classList.add("hidden");
       });
@@ -197,14 +213,10 @@ function renderChartEmptyState(chartEl, title, icon, subtitle) {
   if (!chartEl) return;
 
   chartEl.innerHTML = `
-    <div
-      class="empty-state-box flex w-full h-full min-h-60 items-center justify-center rounded-2xl border border-dashed border-border/80 bg-surface p-6 text-center"
-    >
+    <div class="empty-state-box flex w-full h-full min-h-60 items-center justify-center rounded-2xl border border-dashed border-border/80 bg-surface p-6 text-center">
       <div class="max-w-xs">
-        <i class="text-4xl mb-3 fa-regular ${icon} text-brand/60"></i>
-        <div
-          class="mb-2 text-lg font-semibold text-color"
-        >
+        <i class="text-4xl mb-3 ti ${icon} text-brand/60"></i>
+        <div class="mb-2 text-lg font-semibold text-color">
           ${title}
         </div>
         <p class="text-sm leading-6 text-secondary">
@@ -220,16 +232,35 @@ function renderNoDataState() {
     {
       id: "apex-heatmap-chart",
       title: "Activity Heatmap",
-      icon: "fa-table-cells",
+      icon: "ti-chart-cohort",
       subtitle:
-        "Complete a Pomodoro or Flow session to see your weekly, monthly, and yearly activity trend.",
+        "Add notes, snippets, bookmarks, or cheatsheets to render heatmap trends.",
     },
     {
       id: "apex-weekday-chart",
-      title: "Weekly Activity",
-      icon: "fa-calendar-days",
+      title: "Weekly Distribution",
+      icon: "ti-calendar",
+      subtitle: "Day-of-week creation velocity will appear once data is added.",
+    },
+    {
+      id: "apex-category-chart",
+      title: "Module Volumes",
+      icon: "ti-chart-pie",
       subtitle:
-        "Your session activity by weekday will appear here once data exists.",
+        "Visual breakdown across Notes, Snippets, Bookmarks & Cheatsheets.",
+    },
+    {
+      id: "apex-mood-chart",
+      title: "Top Tags Breakdown",
+      icon: "ti-tags",
+      subtitle:
+        "Categorize your knowledge base items with tags to track distribution.",
+    },
+    {
+      id: "apex-energy-chart",
+      title: "Storage Allocation",
+      icon: "ti-database",
+      subtitle: "Displays entity size metrics and system storage ratio.",
     },
   ];
 
@@ -239,25 +270,53 @@ function renderNoDataState() {
   });
 }
 
+function destroyChartInstances() {
+  if (heatmapChartInstance) {
+    heatmapChartInstance.destroy();
+    heatmapChartInstance = null;
+  }
+  if (weeklyChartInstance) {
+    weeklyChartInstance.destroy();
+    weeklyChartInstance = null;
+  }
+  if (moduleDistChartInstance) {
+    moduleDistChartInstance.destroy();
+    moduleDistChartInstance = null;
+  }
+  if (tagsChartInstance) {
+    tagsChartInstance.destroy();
+    tagsChartInstance = null;
+  }
+  if (statusChartInstance) {
+    statusChartInstance.destroy();
+    statusChartInstance = null;
+  }
+}
+
 export function renderAnalyticsCharts(
-  sessions = [],
+  notes = [],
+  snippets = [],
+  bookmarks = [],
+  cheatsheets = [],
   currentHeatmapView = "weekly",
 ) {
   const dashboard = document.getElementById("dashboard");
   if (!dashboard) return;
 
-  if (heatmapChartInstance) {
-    heatmapChartInstance.destroy();
-    heatmapChartInstance = null;
-  }
-  if (barChartInstance) {
-    barChartInstance.destroy();
-    barChartInstance = null;
-  }
+  destroyChartInstances();
 
-  dashboard.innerHTML = DashboardComponent.render(sessions);
+  dashboard.innerHTML = DashboardComponent.render(
+    notes,
+    snippets,
+    bookmarks,
+    cheatsheets,
+  );
 
-  const hasData = Array.isArray(sessions) && sessions.length > 0;
+  const hasData =
+    (Array.isArray(notes) && notes.length > 0) ||
+    (Array.isArray(snippets) && snippets.length > 0) ||
+    (Array.isArray(bookmarks) && bookmarks.length > 0) ||
+    (Array.isArray(cheatsheets) && cheatsheets.length > 0);
 
   if (hasData) {
     const chartBox = document.querySelectorAll('[id^="apex"]');
@@ -272,12 +331,14 @@ export function renderAnalyticsCharts(
       );
     });
 
-    HeatmapSwitcher.classList.replace("sm:hidden", "sm:flex");
-    mobileHeatmapSwitcher.classList.replace("hidden", "inline-flex");
+    if (HeatmapSwitcher)
+      HeatmapSwitcher.classList.replace("sm:hidden", "sm:flex");
+    if (mobileHeatmapSwitcher)
+      mobileHeatmapSwitcher.classList.replace("hidden", "inline-flex");
   }
 
   AnalyticsController.init();
-  bindAnalyticsControls(sessions);
+  bindAnalyticsControls(notes, snippets, bookmarks, cheatsheets);
 
   if (!hasData) {
     const HeatmapSwitcher = document.getElementById("chart-view-switcher");
@@ -285,8 +346,10 @@ export function renderAnalyticsCharts(
       "heatmap-mobile-menu-toggle",
     );
 
-    HeatmapSwitcher.classList.replace("sm:flex", "sm:hidden");
-    mobileHeatmapSwitcher.classList.replace("inline-flex", "hidden");
+    if (HeatmapSwitcher)
+      HeatmapSwitcher.classList.replace("sm:flex", "sm:hidden");
+    if (mobileHeatmapSwitcher)
+      mobileHeatmapSwitcher.classList.replace("inline-flex", "hidden");
 
     renderNoDataState();
     requestAnimationFrame(() => {
@@ -305,13 +368,24 @@ export function renderAnalyticsCharts(
     localStorage.getItem("theme") === "dark";
   const axisTextColor = isDark ? "#e2e8f0" : "#222f47";
 
-  // Build Heatmap Options
-  const heatmapOptions = getHeatmapOptions(sessions, currentHeatmapView);
+  // 1. Heatmap Options
+  const heatmapOptions = getHeatmapOptions(
+    notes,
+    snippets,
+    bookmarks,
+    cheatsheets,
+    currentHeatmapView,
+  );
 
-  const weekdayCounts = AnalyticsAdapter.generateWeekdayCounts(sessions);
-
-  const barChartOptions = {
-    series: [{ name: "Sessions", data: weekdayCounts }],
+  // 2. Weekday Bar Chart Options
+  const weekdayCounts = AnalyticsAdapter.generateWeekdayCounts(
+    notes,
+    snippets,
+    bookmarks,
+    cheatsheets,
+  );
+  const weeklyChartOptions = {
+    series: [{ name: "Created Items", data: weekdayCounts }],
     chart: {
       id: "weekday-bar",
       type: "bar",
@@ -337,7 +411,7 @@ export function renderAnalyticsCharts(
         fontWeight: "bold",
         colors: [axisTextColor],
       },
-      formatter: (val) => val + " sessions",
+      formatter: (val) => `${val} items`,
     },
     xaxis: {
       categories: weekdayNames,
@@ -347,7 +421,11 @@ export function renderAnalyticsCharts(
     },
     yaxis: {
       labels: {
-        style: { colors: axisTextColor, fontSize: "12px", fontWeight: 700 },
+        style: {
+          colors: axisTextColor,
+          fontSize: "12px",
+          fontWeight: 700,
+        },
       },
     },
     grid: {
@@ -358,8 +436,180 @@ export function renderAnalyticsCharts(
     tooltip: { theme: isDark ? "dark" : "light" },
   };
 
+  // 3. Module Distribution (Polar Area Chart)
+  const moduleData = AnalyticsAdapter.generateModuleAnalytics(
+    notes,
+    snippets,
+    bookmarks,
+    cheatsheets,
+  );
+  const moduleDistOptions = {
+    series: moduleData.series,
+    labels: moduleData.labels,
+    chart: {
+      id: "module-polar",
+      type: "polarArea",
+      width: "100%",
+      height: 400,
+      toolbar: { show: false },
+      fontFamily: "inherit",
+    },
+    colors: ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6"],
+    stroke: { colors: [isDark ? "#1e293b" : "#ffffff"] },
+    fill: { opacity: 0.85 },
+    legend: {
+      position: "bottom",
+      labels: { colors: axisTextColor },
+      horizontalAlign: "center",
+    },
+    tooltip: { theme: isDark ? "dark" : "light" },
+    responsive: [
+      {
+        breakpoint: 768,
+        options: {
+          chart: {
+            height: 200,
+          },
+          legend: {
+            fontSize: "11px",
+            itemMargin: {
+              horizontal: 5,
+              vertical: 2,
+            },
+          },
+        },
+      },
+    ],
+  };
+
+  // 4. Top Tags Analytics (Bar Chart)
+  const tagsData = AnalyticsAdapter.generateTagsAnalytics(
+    notes,
+    snippets,
+    bookmarks,
+    cheatsheets,
+  );
+
+  const tagsChartOptions = {
+    series: tagsData.series,
+    chart: {
+      id: "tags-bar",
+      type: "bar",
+      height: 400,
+      toolbar: { show: false },
+      fontFamily: "inherit",
+    },
+    colors: ["#8b5cf6"],
+    plotOptions: {
+      bar: {
+        horizontal: false,
+        columnWidth: "45%",
+        borderRadius: 5,
+        dataLabels: { position: "top" },
+      },
+    },
+    dataLabels: {
+      enabled: true,
+      offsetY: -18,
+      style: {
+        colors: [axisTextColor],
+        fontSize: "11px",
+        fontWeight: "bold",
+      },
+      formatter: (val) => (val > 0 ? val : ""),
+    },
+    xaxis: {
+      categories: tagsData.categories,
+      labels: {
+        style: {
+          colors: axisTextColor,
+          fontSize: "11px",
+          fontWeight: 600,
+        },
+      },
+    },
+    yaxis: {
+      labels: {
+        style: {
+          colors: axisTextColor,
+          fontSize: "11px",
+        },
+      },
+    },
+    grid: {
+      borderColor: isDark ? "#334155" : "#e2e8f0",
+      strokeDashArray: 4,
+    },
+    tooltip: { theme: isDark ? "dark" : "light" },
+  };
+
+  // 5. Storage / Metrics Analytics (Bar Chart)
+  const metricsData = AnalyticsAdapter.generateMetricsAnalytics(
+    notes,
+    snippets,
+    bookmarks,
+    cheatsheets,
+  );
+
+  const statusChartOptions = {
+    series: metricsData.series,
+    chart: {
+      id: "metrics-bar",
+      type: "bar",
+      height: 380,
+      toolbar: { show: false },
+      fontFamily: "inherit",
+    },
+    colors: ["#f59e0b"],
+    plotOptions: {
+      bar: {
+        horizontal: false,
+        columnWidth: "45%",
+        borderRadius: 5,
+        dataLabels: { position: "top" },
+      },
+    },
+    dataLabels: {
+      enabled: true,
+      offsetY: -18,
+      style: {
+        colors: [axisTextColor],
+        fontSize: "11px",
+        fontWeight: "bold",
+      },
+      formatter: (val) => (val > 0 ? val : ""),
+    },
+    xaxis: {
+      categories: metricsData.categories,
+      labels: {
+        style: {
+          colors: axisTextColor,
+          fontSize: "11px",
+          fontWeight: 600,
+        },
+      },
+    },
+    yaxis: {
+      labels: {
+        style: {
+          colors: axisTextColor,
+          fontSize: "11px",
+        },
+      },
+    },
+    grid: {
+      borderColor: isDark ? "#334155" : "#e2e8f0",
+      strokeDashArray: 4,
+    },
+    tooltip: { theme: isDark ? "dark" : "light" },
+  };
+
+  // Mount ApexCharts
   const heatmapEl = document.getElementById("apex-heatmap-chart");
   const barEl = document.getElementById("apex-weekday-chart");
+  const categoryEl = document.getElementById("apex-category-chart");
+  const tagEl = document.getElementById("apex-tas-chart");
+  const statusEl = document.getElementById("apex-status-chart");
 
   if (heatmapEl) {
     heatmapChartInstance = new ApexCharts(heatmapEl, heatmapOptions);
@@ -367,9 +617,26 @@ export function renderAnalyticsCharts(
   }
 
   if (barEl) {
-    barChartInstance = new ApexCharts(barEl, barChartOptions);
-    barChartInstance.render();
+    weeklyChartInstance = new ApexCharts(barEl, weeklyChartOptions);
+    weeklyChartInstance.render();
   }
 
-  requestAnimationFrame(() => updateTabStyles(currentHeatmapView));
+  if (categoryEl) {
+    moduleDistChartInstance = new ApexCharts(categoryEl, moduleDistOptions);
+    moduleDistChartInstance.render();
+  }
+
+  if (tagEl) {
+    tagsChartInstance = new ApexCharts(tagEl, tagsChartOptions);
+    tagsChartInstance.render();
+  }
+
+  if (statusEl) {
+    statusChartInstance = new ApexCharts(statusEl, statusChartOptions);
+    statusChartInstance.render();
+  }
+
+  requestAnimationFrame(() => {
+    updateTabStyles(currentHeatmapView);
+  });
 }

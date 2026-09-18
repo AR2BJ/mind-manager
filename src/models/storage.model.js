@@ -1,104 +1,81 @@
 import { generateId, todayISO } from "@/utils/helpers.js";
 
-export const STORAGE_KEY = "time_manager";
+export const STORAGE_KEY = "mind-manager";
 export const STORAGE_VERSION = 1;
 
-function normalizeTask(task) {
+export function normalizeNote(data = {}) {
   return {
-    id: String(task.id || generateId()),
-    title: task.title || "Untitled Task",
-    status: task.status || "todo",
-    estimatedFocusUnits: Number(task.estimatedFocusUnits) || 1,
-    completedFocusUnits: Number(task.completedFocusUnits) || 0,
-    createdAt: task.createdAt || todayISO(),
+    id: String(data.id || generateId()),
+    title: data.title || "Untitled Note",
+    content: data.content || "",
+    category: data.category || "general",
+    tags: Array.isArray(data.tags) ? data.tags : [],
+    pinned: Boolean(data.pinned),
+    createdAt: data.createdAt || todayISO(),
+    updatedAt: data.updatedAt || todayISO(),
   };
 }
 
-function normalizeSession(session) {
+export function normalizeSnippet(data = {}) {
   return {
-    id: String(session.id || generateId()),
-    taskId: session.taskId ? String(session.taskId) : null,
-    taskTitle: session.taskTitle || "Untitled Task",
-    type: session.type || "pomodoro",
-    durationSeconds: Number(session.durationSeconds) || 0,
-    completedAt: session.completedAt || todayISO(),
+    id: String(data.id || generateId()),
+    title: data.title || "Untitled Snippet",
+    description: data.description || "",
+    code: data.code || "",
+    category: data.category || "javascript",
+    tags: Array.isArray(data.tags) ? data.tags : [],
+    isFavorite: Boolean(data.isFavorite),
+    createdAt: data.createdAt || todayISO(),
+    updatedAt: data.updatedAt || todayISO(),
   };
 }
 
-function normalizeNote(note) {
+export function normalizeBookmark(data = {}) {
   return {
-    id: String(note.id || generateId()),
-    text: note.text ? String(note.text).trim() : "",
-    createdAt: note.createdAt || todayISO(),
+    id: String(data.id || generateId()),
+    title: data.title || "Untitled Bookmark",
+    url: data.url || "",
+    description: data.description || "",
+    category: data.category || "uncategorized",
+    tags: Array.isArray(data.tags) ? data.tags : [],
+    favicon: data.favicon || "",
+    createdAt: data.createdAt || todayISO(),
+    updatedAt: data.updatedAt || todayISO(),
   };
 }
 
-function normalizeMind(mind, defaultWorkTime = 25) {
-  const fallbackSecs = defaultWorkTime * 60;
+export function normalizeCheatSheet(data = {}) {
   return {
-    isRunning: false,
-    isPaused: Boolean(mind?.isRunning || mind?.isPaused),
-    mindemaining: Number(mind?.mindemaining) ?? fallbackSecs,
-    duration: Number(mind?.duration) ?? fallbackSecs,
-    flowTime: Number(mind?.flowTime) || 0,
-    pomodoroSessionCount: Number(mind?.pomodoroSessionCount) || 0,
-    currentPhase: mind?.currentPhase || "work",
-  };
-}
-
-function migrateData(data) {
-  const tasks = Array.isArray(data.tasks) ? data.tasks : [];
-  const sessions = Array.isArray(data.sessions) ? data.sessions : [];
-  const notes = Array.isArray(data.notes) ? data.notes : [];
-  const settings = data.settings || {};
-  const pomodoroWorkTime = Number(settings.pomodoroWorkTime) || 25;
-
-  return {
-    version: STORAGE_VERSION,
-    activeMode: data.activeMode === "flow" ? "flow" : "pomodoro",
-    activeTaskId: data.activeTaskId ? String(data.activeTaskId) : null,
-    tasks: tasks.map(normalizeTask),
-    sessions: sessions.map(normalizeSession),
-    notes: notes.map(normalizeNote),
-    mind: normalizeMind(data.mind, pomodoroWorkTime),
-    settings: {
-      ...settings,
-      pomodoroWorkTime,
-      shortBreakTime: Number(settings.shortBreakTime) || 5,
-      longBreakTime: Number(settings.longBreakTime) || 15,
-      longBreakInterval: Number(settings.longBreakInterval) || 4,
-      autoStartBreaks: Boolean(settings.autoStartBreaks),
-      autoStartPomodoros: Boolean(settings.autoStartPomodoros),
-      flowBreakTime: Number(settings.flowBreakTime) || 15,
-      autoStartFlowBreaks: Boolean(settings.autoStartFlowBreaks),
-      notificationSound: Boolean(settings.notificationSound),
-      pomodoroEndSound: settings.pomodoroEndSound || "none",
-      breakEndSound: settings.breakEndSound || "none",
-      currentSoundId:
-        settings.currentSoundId || settings.lastSelectedSoundId || "none",
-      volume: typeof settings.volume === "number" ? settings.volume : 50,
-      isMuted: Boolean(settings.isMuted),
-    },
+    id: String(data.id || generateId()),
+    title: data.title || "Untitled CheatSheet",
+    description: data.description || "",
+    category: data.category || "general",
+    items: Array.isArray(data.items)
+      ? data.items.map((item) => ({
+          id: String(item.id || generateId()),
+          key: item.key || "",
+          value: item.value || "",
+        }))
+      : [],
+    tags: Array.isArray(data.tags) ? data.tags : [],
+    createdAt: data.createdAt || todayISO(),
+    updatedAt: data.updatedAt || todayISO(),
   };
 }
 
 export function saveToStorage(data) {
   try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        version: STORAGE_VERSION,
-        activeMode: data.activeMode || "pomodoro",
-        activeTaskId: data.activeTaskId ? String(data.activeTaskId) : null,
-        tasks: data.tasks || [],
-        sessions: data.sessions || [],
-        notes: data.notes || [],
-        mind: data.mind || {},
-        settings: data.settings || {},
-      }),
-    );
+    const payload = {
+      version: STORAGE_VERSION,
+      notes: data.notes || [],
+      snippets: data.snippets || [],
+      bookmarks: data.bookmarks || [],
+      cheatsheets: data.cheatsheets || [],
+    };
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   } catch (error) {
-    console.error("Failed to save Time Manager data to localStorage:", error);
+    console.error("Failed to save data structure:", error);
   }
 }
 
@@ -107,9 +84,17 @@ export function loadFromStorage() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
 
-    return migrateData(JSON.parse(raw));
+    const data = JSON.parse(raw);
+
+    return {
+      version: STORAGE_VERSION,
+      notes: (data.notes || []).map(normalizeNote),
+      snippets: (data.snippets || []).map(normalizeSnippet),
+      bookmarks: (data.bookmarks || []).map(normalizeBookmark),
+      cheatsheets: (data.cheatsheets || []).map(normalizeCheatSheet),
+    };
   } catch (error) {
-    console.error("Failed to load Time Manager data from localStorage:", error);
+    console.error("Failed to load data structure:", error);
     return null;
   }
 }

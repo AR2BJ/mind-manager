@@ -1,3 +1,13 @@
+// export const openObjectivesState = {
+//   objectivesMemory: new Map(),
+//   expandedPlanIds: new Set(),
+
+//   clear() {
+//     this.objectivesMemory.clear();
+//     this.expandedPlanIds.clear();
+//   },
+// };
+
 export function generateId() {
   if (window.crypto?.randomUUID) {
     return window.crypto.randomUUID();
@@ -24,23 +34,6 @@ export function generateId() {
   return `${timeLow}-${timeMid}-${timeHiAndVersion}-${clockSeqHiAndReserved}-${node}`;
 }
 
-export function formatTime(totalSeconds = 0) {
-  const seconds = Math.max(0, Math.floor(totalSeconds));
-  const hrs = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-
-  const paddedMins = String(mins).padStart(2, "0");
-  const paddedSecs = String(secs).padStart(2, "0");
-
-  if (hrs > 0) {
-    const paddedHrs = String(hrs).padStart(2, "0");
-    return `${paddedHrs}:${paddedMins}:${paddedSecs}`;
-  }
-
-  return `${paddedMins}:${paddedSecs}`;
-}
-
 export function formatDate(date) {
   if (!(date instanceof Date) || isNaN(date.getTime())) {
     date = new Date();
@@ -54,16 +47,4 @@ export function formatDate(date) {
 
 export function todayISO() {
   return formatDate(new Date());
-}
-
-export function isOverdue(dueDateStr, status) {
-  if (!dueDateStr || status === "done") return false;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const due = new Date(dueDateStr);
-  due.setHours(0, 0, 0, 0);
-
-  return due < today;
 }

@@ -1,306 +1,272 @@
-import { StateManager, state } from "@/models/state.model.js";
+import { generateId, todayISO } from "@/utils/helpers.js";
 
-import { NotificationService } from "./notification.service.js";
-import { SoundModel } from "@/models/sound.model.js";
-import { TaskService } from "./task.service.js";
-import { soundService } from "./sound.service.js";
+export const MindService = {
+  // ==========================================
+  // 1. NOTES
+  // ==========================================
+  createNote(currentNotes = [], noteData = {}) {
+    const rawTitle = typeof noteData === "string" ? noteData : noteData.title;
+    const cleanedTitle = (rawTitle || "").trim().replace(/\s+/g, " ");
 
-class MindService {
-  constructor() {
-    this.mindInterval = null;
-  }
-
-  initFromSavedState() {
-    if (state.mind?.isRunning && !state.mind?.isPaused) {
-      StateManager.updateMindState({ isPaused: true, isRunning: false });
-    }
-  }
-
-  isMindRunning() {
-    return state.mind?.isRunning && !state.mind?.isPaused;
-  }
-
-  toggle() {
-    if (state.mind.isRunning && !state.mind.isPaused) {
-      this.pause();
-    } else {
-      this.start();
-    }
-  }
-
-  start() {
-    if (state.mind.isRunning && !state.mind.isPaused) return;
-
-    StateManager.updateMindState({ isRunning: true, isPaused: false });
-
-    const currentTrack = SoundModel.getCurrentTrack();
-    if (currentTrack) {
-      soundService.playTrack(currentTrack);
+    if (!cleanedTitle || cleanedTitle.length < 2 || cleanedTitle.length > 120) {
+      throw new Error("Note title must be between 2 and 120 characters");
     }
 
-    clearInterval(this.mindInterval);
-    this.mindInterval = setInterval(() => {
-      this._tick();
-    }, 1000);
-  }
+    const newNote = {
+      id: String(noteData.id || generateId()),
+      title: cleanedTitle,
+      content: (noteData.content || "").trim(),
+      category: String(noteData.category || "general"),
+      tags: Array.isArray(noteData.tags) ? noteData.tags : [],
+      pinned: Boolean(noteData.pinned),
+      createdAt: todayISO(),
+      updatedAt: todayISO(),
+    };
 
-  pause() {
-    clearInterval(this.mindInterval);
-    StateManager.updateMindState({ isRunning: false, isPaused: true });
+    return [newNote, ...currentNotes];
+  },
 
-    soundService.pause();
-  }
+  editNote(currentNotes = [], noteId, updatedFields = {}) {
+    const note = currentNotes.find((n) => String(n.id) === String(noteId));
+    if (!note) throw new Error("Note not found");
 
-  stopAndTransition() {
-    clearInterval(this.mindInterval);
-
-    if (state.activeMode === "flow") {
-      this._handleFlowStop();
-    } else {
-      this._onPomodoroComplete();
-    }
-  }
-
-  reset() {
-    clearInterval(this.mindInterval);
-    StateManager.resetMind();
-    soundService.pause();
-  }
-
-  _handlePomodoroTick() {
-    const newTime = state.mind.mindemaining - 1;
-
-    if (newTime <= 0) {
-      this._onPomodoroComplete();
-    } else {
-      StateManager.updateMindState({ mindemaining: newTime });
-    }
-  }
-
-  _onPomodoroComplete() {
-    clearInterval(this.mindInterval);
-
-    const isWorkPhase = state.mind.currentPhase === "work";
-
-    const soundToPlay = isWorkPhase
-      ? state.settings.pomodoroEndSound || "bell"
-      : state.settings.breakEndSound || "chime";
-
-    soundService.playNotificationSound(soundToPlay);
-
-    if (isWorkPhase) {
-      const currentTaskId = state.activeTaskId;
-      const currentTask = TaskService.getActiveTask();
-
-      if (currentTaskId) {
-        TaskService.incrementCompletedFocusUnits(currentTaskId);
-      }
-
-      const newSessionCount = (state.mind.pomodoroSessionCount || 0) + 1;
-      const workSecs = (state.settings.pomodoroWorkTime || 25) * 60;
-
-      StateManager.addSession({
-        taskId: currentTaskId,
-        taskTitle: currentTask ? currentTask.title : "Untitled Session",
-        type: "pomodoro",
-        durationSeconds: workSecs,
-      });
-
-      NotificationService.show({
-        type: "success",
-        message: "Focus session completed! Time for a break",
-        icon: "fa-circle-check",
-        iconColor: "text-emerald-500",
-      });
-
-      if (state.settings.disableBreaks) {
-        StateManager.updateMindState({
-          isRunning: false,
-          isPaused: false,
-          pomodoroSessionCount: newSessionCount,
-          currentPhase: "work",
-          mindemaining: workSecs,
-          duration: workSecs,
-        });
-
-        if (state.settings.autoStartPomodoros) {
-          this.start();
-        } else {
-          soundService.pause();
-        }
-        return;
-      }
-
-      const interval = state.settings.longBreakInterval || 4;
-      const isLongBreak = newSessionCount % interval === 0;
-      const nextPhase = isLongBreak ? "longBreak" : "shortBreak";
-      const breakMinutes =
-        nextPhase === "longBreak"
-          ? state.settings.longBreakTime || 15
-          : state.settings.shortBreakTime || 5;
-
-      StateManager.updateMindState({
-        isRunning: false,
-        isPaused: false,
-        pomodoroSessionCount: newSessionCount,
-        currentPhase: nextPhase,
-        mindemaining: breakMinutes * 60,
-        duration: breakMinutes * 60,
-      });
-
-      if (state.settings.autoStartBreaks) {
-        this.start();
-      } else {
-        soundService.pause();
-      }
-    } else {
-      // Break phase completed -> return to Work phase
-      const workSecs = (state.settings.pomodoroWorkTime || 25) * 60;
-      StateManager.updateMindState({
-        isRunning: false,
-        isPaused: false,
-        currentPhase: "work",
-        mindemaining: workSecs,
-        duration: workSecs,
-      });
-
-      NotificationService.show({
-        type: "info",
-        message: "Break has ended! Ready to focus?",
-        icon: "fa-bolt",
-        iconColor: "text-brand",
-      });
-
-      if (state.settings.autoStartPomodoros) {
-        this.start();
-      } else {
-        soundService.pause();
+    let cleanedTitle = note.title;
+    if (updatedFields.title !== undefined) {
+      cleanedTitle = updatedFields.title.trim().replace(/\s+/g, " ");
+      if (cleanedTitle.length < 2 || cleanedTitle.length > 120) {
+        throw new Error("Note title must be between 2 and 120 characters");
       }
     }
 
-    window.dispatchEvent(new CustomEvent("pomodoroCompleted"));
-  }
+    return currentNotes.map((n) => {
+      if (String(n.id) !== String(noteId)) return n;
 
-  _tick() {
-    if (state.activeMode === "pomodoro") {
-      this._handlePomodoroTick();
-    } else {
-      this._handleFlowTick();
-    }
-  }
-
-  _handleFlowTick() {
-    const isBreak = state.mind.currentPhase === "break";
-
-    if (isBreak) {
-      const newTime = state.mind.mindemaining - 1;
-      if (newTime <= 0) {
-        this._onFlowBreakComplete();
-      } else {
-        StateManager.updateMindState({ mindemaining: newTime });
-      }
-    } else {
-      const newFlowTime = (state.mind.flowTime || 0) + 1;
-      StateManager.updateMindState({ flowTime: newFlowTime });
-    }
-  }
-
-  _onFlowBreakComplete() {
-    clearInterval(this.mindInterval);
-
-    const workSecs = (state.settings.pomodoroWorkTime || 25) * 60;
-    StateManager.updateMindState({
-      isRunning: false,
-      isPaused: false,
-      flowTime: 0,
-      currentPhase: "work",
-      mindemaining: workSecs,
-      duration: workSecs,
+      return {
+        ...n,
+        ...updatedFields,
+        title: cleanedTitle,
+        tags: Array.isArray(updatedFields.tags) ? updatedFields.tags : n.tags,
+        updatedAt: todayISO(),
+      };
     });
+  },
 
-    NotificationService.show({
-      type: "info",
-      message: "Flow Break has ended! Ready to focus?",
-      icon: "fa-bolt",
-      iconColor: "text-brand",
+  toggleNotePin(currentNotes = [], noteId) {
+    return currentNotes.map((n) => {
+      if (String(n.id) !== String(noteId)) return n;
+      return {
+        ...n,
+        pinned: !n.pinned,
+        updatedAt: todayISO(),
+      };
     });
+  },
 
-    soundService.pause();
-  }
+  deleteNote(currentNotes = [], noteId) {
+    return currentNotes.filter((n) => String(n.id) !== String(noteId));
+  },
 
-  _handleFlowStop() {
-    const currentTaskId = state.activeTaskId;
-    const currentTask = TaskService.getActiveTask();
+  // ==========================================
+  // 2. SNIPPETS
+  // ==========================================
+  createSnippet(currentSnippets = [], snippetData = {}) {
+    const rawTitle =
+      typeof snippetData === "string" ? snippetData : snippetData.title;
+    const cleanedTitle = (rawTitle || "").trim().replace(/\s+/g, " ");
 
-    const flowTime = state.mind.flowTime || 0;
-    const isBreak = state.mind.currentPhase === "break";
-
-    const isWorkPhase = state.mind.currentPhase === "work";
-
-    const soundToPlay = isWorkPhase
-      ? state.settings.pomodoroEndSound || "bell"
-      : state.settings.breakEndSound || "chime";
-
-    soundService.playNotificationSound(soundToPlay);
-
-    if (isBreak) {
-      const workSecs = (state.settings.pomodoroWorkTime || 25) * 60;
-      StateManager.updateMindState({
-        isRunning: false,
-        isPaused: false,
-        flowTime: 0,
-        currentPhase: "work",
-        mindemaining: workSecs,
-        duration: workSecs,
-      });
-      soundService.pause();
-      return;
+    if (!cleanedTitle || cleanedTitle.length < 2 || cleanedTitle.length > 120) {
+      throw new Error("Snippet title must be between 2 and 120 characters");
     }
 
-    if (flowTime >= 1500) {
-      StateManager.addSession({
-        taskId: currentTaskId,
-        taskTitle: currentTask ? currentTask.title : "Untitled Session",
-        type: "flow",
-        durationSeconds: flowTime,
-      });
+    const newSnippet = {
+      id: String(snippetData.id || generateId()),
+      title: cleanedTitle,
+      description: (snippetData.description || "").trim(),
+      code: (snippetData.code || "").trim(),
+      category: String(snippetData.category || "javascript"),
+      tags: Array.isArray(snippetData.tags) ? snippetData.tags : [],
+      isFavorite: Boolean(snippetData.isFavorite),
+      createdAt: todayISO(),
+      updatedAt: todayISO(),
+    };
 
-      if (currentTaskId) {
-        TaskService.incrementCompletedFocusUnits(currentTaskId);
+    return [newSnippet, ...currentSnippets];
+  },
+
+  editSnippet(currentSnippets = [], snippetId, updatedFields = {}) {
+    const snippet = currentSnippets.find(
+      (s) => String(s.id) === String(snippetId),
+    );
+    if (!snippet) throw new Error("Snippet not found");
+
+    let cleanedTitle = snippet.title;
+    if (updatedFields.title !== undefined) {
+      cleanedTitle = updatedFields.title.trim().replace(/\s+/g, " ");
+      if (cleanedTitle.length < 2 || cleanedTitle.length > 120) {
+        throw new Error("Snippet title must be between 2 and 120 characters");
       }
-
-      NotificationService.show({
-        type: "success",
-        message: `Flow session completed! You focused for ${Math.round(flowTime / 60)} minutes`,
-        icon: "fa-circle-check",
-        iconColor: "text-emerald-500",
-      });
-    } else {
-      NotificationService.show({
-        type: "info",
-        message:
-          "Flow session was too short (under 25 minutes), No session saved",
-        icon: "fa-info-circle",
-        iconColor: "text-brand",
-      });
     }
 
-    const breakSecs = (state.settings.flowBreakTime || 15) * 60;
-    StateManager.updateMindState({
-      isRunning: false,
-      isPaused: false,
-      flowTime: 0,
-      currentPhase: "break",
-      mindemaining: breakSecs,
-      duration: breakSecs,
+    return currentSnippets.map((s) => {
+      if (String(s.id) !== String(snippetId)) return s;
+
+      return {
+        ...s,
+        ...updatedFields,
+        title: cleanedTitle,
+        tags: Array.isArray(updatedFields.tags) ? updatedFields.tags : s.tags,
+        updatedAt: todayISO(),
+      };
     });
+  },
 
-    if (state.settings.autoStartFlowBreaks) {
-      this.start();
-    } else {
-      soundService.pause();
+  toggleSnippetFavorite(currentSnippets = [], snippetId) {
+    return currentSnippets.map((s) => {
+      if (String(s.id) !== String(snippetId)) return s;
+      return {
+        ...s,
+        isFavorite: !s.isFavorite,
+        updatedAt: todayISO(),
+      };
+    });
+  },
+
+  deleteSnippet(currentSnippets = [], snippetId) {
+    return currentSnippets.filter((s) => String(s.id) !== String(snippetId));
+  },
+
+  // ==========================================
+  // 3. BOOKMARKS
+  // ==========================================
+  createBookmark(currentBookmarks = [], bookmarkData = {}) {
+    const rawTitle =
+      typeof bookmarkData === "string" ? bookmarkData : bookmarkData.title;
+    const cleanedTitle = (rawTitle || "").trim().replace(/\s+/g, " ");
+
+    if (!cleanedTitle || cleanedTitle.length < 2 || cleanedTitle.length > 120) {
+      throw new Error("Bookmark title must be between 2 and 120 characters");
     }
-  }
-}
 
-export const mindService = new MindService();
+    const rawUrl = (bookmarkData.url || "").trim();
+    if (!rawUrl) {
+      throw new Error("URL is required for bookmark");
+    }
+
+    const newBookmark = {
+      id: String(bookmarkData.id || generateId()),
+      title: cleanedTitle,
+      url: rawUrl,
+      description: (bookmarkData.description || "").trim(),
+      category: String(bookmarkData.category || "uncategorized"),
+      tags: Array.isArray(bookmarkData.tags) ? bookmarkData.tags : [],
+      favicon: (bookmarkData.favicon || "").trim(),
+      createdAt: todayISO(),
+      updatedAt: todayISO(),
+    };
+
+    return [newBookmark, ...currentBookmarks];
+  },
+
+  editBookmark(currentBookmarks = [], bookmarkId, updatedFields = {}) {
+    const bookmark = currentBookmarks.find(
+      (b) => String(b.id) === String(bookmarkId),
+    );
+    if (!bookmark) throw new Error("Bookmark not found");
+
+    let cleanedTitle = bookmark.title;
+    if (updatedFields.title !== undefined) {
+      cleanedTitle = updatedFields.title.trim().replace(/\s+/g, " ");
+      if (cleanedTitle.length < 2 || cleanedTitle.length > 120) {
+        throw new Error("Bookmark title must be between 2 and 120 characters");
+      }
+    }
+
+    return currentBookmarks.map((b) => {
+      if (String(b.id) !== String(bookmarkId)) return b;
+
+      return {
+        ...b,
+        ...updatedFields,
+        title: cleanedTitle,
+        tags: Array.isArray(updatedFields.tags) ? updatedFields.tags : b.tags,
+        updatedAt: todayISO(),
+      };
+    });
+  },
+
+  deleteBookmark(currentBookmarks = [], bookmarkId) {
+    return currentBookmarks.filter((b) => String(b.id) !== String(bookmarkId));
+  },
+
+  // ==========================================
+  // 4. CHEATSHEETS
+  // ==========================================
+  createCheatSheet(currentCheatSheets = [], sheetData = {}) {
+    const rawTitle =
+      typeof sheetData === "string" ? sheetData : sheetData.title;
+    const cleanedTitle = (rawTitle || "").trim().replace(/\s+/g, " ");
+
+    if (!cleanedTitle || cleanedTitle.length < 2 || cleanedTitle.length > 120) {
+      throw new Error("CheatSheet title must be between 2 and 120 characters");
+    }
+
+    const newSheet = {
+      id: String(sheetData.id || generateId()),
+      title: cleanedTitle,
+      description: (sheetData.description || "").trim(),
+      category: String(sheetData.category || "general"),
+      items: Array.isArray(sheetData.items)
+        ? sheetData.items.map((item) => ({
+            id: String(item.id || generateId()),
+            key: (item.key || "").trim(),
+            value: (item.value || "").trim(),
+          }))
+        : [],
+      tags: Array.isArray(sheetData.tags) ? sheetData.tags : [],
+      createdAt: todayISO(),
+      updatedAt: todayISO(),
+    };
+
+    return [newSheet, ...currentCheatSheets];
+  },
+
+  editCheatSheet(currentCheatSheets = [], sheetId, updatedFields = {}) {
+    const sheet = currentCheatSheets.find(
+      (s) => String(s.id) === String(sheetId),
+    );
+    if (!sheet) throw new Error("CheatSheet not found");
+
+    let cleanedTitle = sheet.title;
+    if (updatedFields.title !== undefined) {
+      cleanedTitle = updatedFields.title.trim().replace(/\s+/g, " ");
+      if (cleanedTitle.length < 2 || cleanedTitle.length > 120) {
+        throw new Error(
+          "CheatSheet title must be between 2 and 120 characters",
+        );
+      }
+    }
+
+    return currentCheatSheets.map((s) => {
+      if (String(s.id) !== String(sheetId)) return s;
+
+      return {
+        ...s,
+        ...updatedFields,
+        title: cleanedTitle,
+        items: Array.isArray(updatedFields.items)
+          ? updatedFields.items.map((item) => ({
+              id: String(item.id || generateId()),
+              key: (item.key || "").trim(),
+              value: (item.value || "").trim(),
+            }))
+          : s.items,
+        tags: Array.isArray(updatedFields.tags) ? updatedFields.tags : s.tags,
+        updatedAt: todayISO(),
+      };
+    });
+  },
+
+  deleteCheatSheet(currentCheatSheets = [], sheetId) {
+    return currentCheatSheets.filter((s) => String(s.id) !== String(sheetId));
+  },
+};

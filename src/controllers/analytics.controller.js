@@ -4,49 +4,50 @@ import {
   updateTabStyles,
 } from "@/views/analytics/analytics.renderer.js";
 
-import { StateManager } from "@/models/state.model";
-
-let currentHeatmapView = "weekly";
+import { DashboardComponent } from "@/components/features/analytics/dashboard.component";
+import { StateManager } from "@/models/state.model.js";
 
 export const AnalyticsController = {
   init() {
-    // this.bindStaticEvents();
+    DashboardComponent.initTabSwitcher();
+    this.bindStaticEvents();
   },
 
   bindStaticEvents() {
-    const switcher = document.getElementById("chart-view-switcher");
-    if (!switcher) return;
-
-    ["view-btn-weekly", "view-btn-monthly", "view-btn-yearly"].forEach((id) => {
-      const btn = document.getElementById(id);
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-view]");
       if (!btn) return;
 
-      const newBtn = btn.cloneNode(true);
-      btn.parentNode.replaceChild(newBtn, btn);
-
-      const viewType = id.replace("view-btn-", "");
-      newBtn.addEventListener("click", () => this.handleTabSwitch(viewType));
-    });
-
-    window.addEventListener("pomodoroCompleted", () => {
-      const state = StateManager.getState();
-      if (state.currentView === "analytics") {
-        renderAnalyticsCharts(state.sessions, currentHeatmapView);
+      const viewType = btn.dataset.view;
+      if (viewType) {
+        this.handleTabSwitch(viewType);
       }
     });
   },
 
   handleTabSwitch(tab) {
-    if (tab === currentHeatmapView) return;
-    currentHeatmapView = tab;
+    const currentView = StateManager.getActiveTab();
+    if (tab === currentView) return;
 
-    // updateTabStyles(tab);
+    StateManager.setHeatmapView(tab);
 
-    // const { sessions } = StateManager.getState();
-    // updateHeatmapChart(sessions, tab);
+    updateTabStyles(tab);
+
+    const notes = StateManager.getNotes() || [];
+    const snippets = StateManager.getSnippets() || [];
+    const bookmarks = StateManager.getBookmarks() || [];
+    const cheatsheets = StateManager.getCheatSheets() || [];
+
+    updateHeatmapChart(notes, snippets, bookmarks, cheatsheets, tab);
   },
 
-  dispatchRender(sessions) {
-    // renderAnalyticsCharts(sessions, currentHeatmapView);
+  dispatchRender() {
+    const notes = StateManager.getNotes() || [];
+    const snippets = StateManager.getSnippets() || [];
+    const bookmarks = StateManager.getBookmarks() || [];
+    const cheatsheets = StateManager.getCheatSheets() || [];
+    const currentView = StateManager.getHeatmapView();
+
+    renderAnalyticsCharts(notes, snippets, bookmarks, cheatsheets, currentView);
   },
 };

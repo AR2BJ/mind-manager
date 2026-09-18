@@ -13,8 +13,8 @@ export const ThemeController = {
     if (!btn) return;
     btn.innerHTML =
       theme === "dark"
-        ? `<i class="fa-regular fa-sun text-yellow-500/80"></i>`
-        : `<i class="fa-regular fa-moon text-secondary"></i>`;
+        ? `<i class="ti ti-sun text-yellow-500/80 text-lg lg:text-xl"></i>`
+        : `<i class="ti ti-moon text-secondary text-lg lg:text-xl"></i>`;
     theme === "dark"
       ? btn.classList.replace("hover:bg-slate-600/10", "hover:bg-yellow-600/10")
       : btn.classList.replace(

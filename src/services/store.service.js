@@ -1,76 +1,102 @@
-import { STORAGE_KEY, loadFromStorage } from "@/models/storage.model.js";
-import { TIME_MANAGER_EVENTS, eventBus } from "./event-bus.service.js";
+import { StateManager, state } from "@/models/state.model.js";
 
-import { SoundModel } from "@/models/sound.model.js";
-import { StateManager } from "@/models/state.model.js";
+import { eventBus } from "@/services/event-bus.service.js";
 
 class StoreService {
   constructor() {
-    this.cacheKey = STORAGE_KEY;
-    this.lastRaw = "";
-    this.initCache();
-    this.listenToStorage();
+    this.init();
   }
 
-  initCache() {
-    this.lastRaw = localStorage.getItem(this.cacheKey) || "";
+  async init() {
+    StateManager.init();
   }
 
-  listenToStorage() {
-    window.addEventListener("storage", (e) => {
-      if (e.key === this.cacheKey) {
-        this.lastRaw = e.newValue || "";
-        this.notifyChanges();
-      }
+  // --- GETTERS ---
+  get notes() {
+    return StateManager.getNotes();
+  }
+
+  get snippets() {
+    return StateManager.getSnippets();
+  }
+
+  get bookmarks() {
+    return StateManager.getBookmarks();
+  }
+
+  get cheatsheets() {
+    return StateManager.getCheatSheets();
+  }
+
+  get activeTab() {
+    return StateManager.getActiveTab();
+  }
+
+  get filteredData() {
+    return StateManager.getFilteredDataForActiveTab();
+  }
+
+  // --- SETTERS & MUTATIONS ---
+  async setNotes(notes) {
+    state.notes = notes;
+    StateManager.save();
+    eventBus.emit("store:notes:changed", notes);
+    eventBus.emit("store:changed", { key: "notes", value: notes });
+  }
+
+  async setSnippets(snippets) {
+    state.snippets = snippets;
+    StateManager.save();
+    eventBus.emit("store:snippets:changed", snippets);
+    eventBus.emit("store:changed", { key: "snippets", value: snippets });
+  }
+
+  async setBookmarks(bookmarks) {
+    state.bookmarks = bookmarks;
+    StateManager.save();
+    eventBus.emit("store:bookmarks:changed", bookmarks);
+    eventBus.emit("store:changed", { key: "bookmarks", value: bookmarks });
+  }
+
+  async setCheatSheets(cheatsheets) {
+    state.cheatsheets = cheatsheets;
+    StateManager.save();
+    eventBus.emit("store:cheatsheets:changed", cheatsheets);
+    eventBus.emit("store:changed", { key: "cheatsheets", value: cheatsheets });
+  }
+
+  // --- UI CONTROLS ---
+  setTab(tab) {
+    StateManager.setTab(tab);
+    eventBus.emit("ui:tab:changed", tab);
+    eventBus.emit("store:changed", { key: "activeTab", value: tab });
+  }
+
+  setCategoryFilter(category) {
+    StateManager.setCategoryFilter(category);
+    eventBus.emit("ui:filter:category", category);
+    eventBus.emit("store:changed", {
+      key: "categoryFilter",
+      value: category,
     });
-
-    setInterval(() => {
-      const currentRaw = localStorage.getItem(this.cacheKey) || "";
-      if (currentRaw !== this.lastRaw) {
-        this.lastRaw = currentRaw;
-        this.notifyChanges();
-      }
-    }, 300);
   }
 
-  notifyChanges() {
-    const updatedData = loadFromStorage();
-    if (!updatedData) return;
+  setFilterBy(filterValue) {
+    StateManager.setFilterBy(filterValue);
+    eventBus.emit("ui:filter:changed", filterValue);
+    eventBus.emit("store:changed", { key: "filterBy", value: filterValue });
+  }
 
-    if (typeof StateManager?.init === "function") {
-      StateManager.init();
-    }
+  setSortBy(sortBy) {
+    StateManager.setSortBy(sortBy);
+    eventBus.emit("ui:sort:changed", sortBy);
+    eventBus.emit("store:changed", { key: "sortBy", value: sortBy });
+  }
 
-    const settings = updatedData.settings || {};
-
-    if (settings.currentSoundId !== undefined) {
-      SoundModel.setSoundTrack(settings.currentSoundId);
-    }
-
-    eventBus.emit(TIME_MANAGER_EVENTS.TASKS_CHANGED, updatedData.tasks || []);
-    eventBus.emit(TIME_MANAGER_EVENTS.NOTES_CHANGED, updatedData.notes || []);
-    eventBus.emit(
-      TIME_MANAGER_EVENTS.SESSIONS_CHANGED,
-      updatedData.sessions || [],
-    );
-    eventBus.emit(TIME_MANAGER_EVENTS.SETTINGS_CHANGED, settings);
-    eventBus.emit(TIME_MANAGER_EVENTS.mind_CHANGED, updatedData.mind || {});
-
-    eventBus.emit(TIME_MANAGER_EVENTS.SOUND_CHANGED, {
-      currentSoundId: settings.currentSoundId || "none",
-      volume: settings.volume ?? 50,
-      soundState: SoundModel.getState(),
-    });
-    eventBus.emit(
-      TIME_MANAGER_EVENTS.SOUND_TRACK_CHANGED,
-      settings.currentSoundId || "none",
-    );
-    eventBus.emit(
-      TIME_MANAGER_EVENTS.SOUND_VOLUME_CHANGED,
-      settings.volume ?? 50,
-    );
-
-    eventBus.emit(TIME_MANAGER_EVENTS.STORE_CHANGED, updatedData);
+  setSearchQuery(query) {
+    StateManager.setSearchQuery(query);
+    eventBus.emit("ui:search:changed", query);
+    eventBus.emit("store:changed", { key: "searchQuery", value: query });
   }
 }
 
