@@ -12,6 +12,10 @@ class StoreService {
   }
 
   // --- GETTERS ---
+  get tags() {
+    return StateManager.getTags();
+  }
+
   get notes() {
     return StateManager.getNotes();
   }
@@ -37,6 +41,13 @@ class StoreService {
   }
 
   // --- SETTERS & MUTATIONS ---
+  async setTags(tags) {
+    state.tags = tags;
+    StateManager.save();
+    eventBus.emit("store:tags:changed", tags);
+    eventBus.emit("store:changed", { key: "tags", value: tags });
+  }
+
   async setNotes(notes) {
     state.notes = notes;
     StateManager.save();

@@ -128,7 +128,7 @@ export const NotificationService = {
       const undoBtn = document.createElement("button");
       undoBtn.className = `h-8 px-3 transition flex items-center justify-center gap-1 cursor-pointer rounded-lg ${toastUndoClass} text-sm font-medium`;
 
-      undoBtn.innerHTML = `<i class="ti ti-arrow-back-up text-xs"></i><span class="text-xs font-semibold">Undo</span>`;
+      undoBtn.innerHTML = `<i class="ti ti-arrow-back-up text-sm lg:text-base pb-0.5"></i><span class="text-xs font-semibold">Undo</span>`;
 
       undoBtn.addEventListener("click", () => {
         undoAction();

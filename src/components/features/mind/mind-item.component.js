@@ -1,4 +1,6 @@
-import { StateManager } from "@/models/state.model.js";
+import { StateManager, state } from "@/models/state.model.js";
+
+import { capitalize } from "@/utils/helpers";
 
 export const MindItemComponent = {
   // --- HELPERS ---
@@ -28,59 +30,48 @@ export const MindItemComponent = {
     `;
   },
 
-  _renderTagsHtml(tags) {
-    if (!Array.isArray(tags) || tags.length === 0) return "";
+  _renderTagsHtml(tagIds) {
+    const allTags = StateManager.getTags() || [];
+
+    if (!Array.isArray(tagIds) || tagIds.length === 0) return "";
+
+    const matchedTags = allTags.filter((tag) => tagIds.includes(tag.id));
+    if (matchedTags.length === 0) return "";
+
     return `
-      <div class="flex items-center gap-1.5 flex-wrap mt-2">
-        ${tags
+      <div class="flex items-center gap-1.5 flex-wrap">
+        ${matchedTags
           .map(
             (tag) => `
-          <span class="inline-flex items-center gap-1 rounded-md bg-surface-3/50 px-2 py-0.5 text-[10px] text-secondary/80 border border-border/30">
-            <i class="ti ti-tags text-[10px] opacity-60"></i>
-            <span>${tag}</span>
-          </span>
-        `,
+              <span
+                class="inline-flex items-center gap-1 rounded-md bg-surface-3/50 px-2 py-0.5 text-[10px] text-secondary/80 border border-border/30"
+              >
+                <i class="ti ti-tag text-xs pb-0.5"></i>
+                <span>${tag.name}</span>
+              </span>
+            `,
           )
           .join("")}
       </div>
     `;
   },
 
-  _renderActionButtons(data, itemType) {
-    const isNote = itemType === "notes";
-    const isSnippet = itemType === "snippets";
+  _renderActionButtons(data) {
+    const itemName = state.activeTab.slice(0, state.activeTab.length - 1);
 
     return `
       <div class="shrink-0">
         <div class="hidden md:flex items-center gap-2">
-          ${
-            isNote
-              ? `
-                <button
-                  type="button"
-                  data-id="${data.id}"
-                  class="pin-note-btn w-9 h-9 rounded-lg bg-surface-2 hover:bg-amber-500/10 border border-border flex items-center justify-center cursor-pointer transition group"
-                  title="${data.pinned ? "Unpin Note" : "Pin Note"}"
-                >
-                  <i class="ti ${data.pinned ? "ti-pinned-filled" : "ti-pin"} ${data.pinned ? "text-amber-400" : "text-secondary group-hover:text-amber-400"}  text-base lg:text-lg transition-all"></i>
-                </button>
-              `
-              : ""
-          }
-          ${
-            isSnippet
-              ? `
-                <button
-                  type="button"
-                  data-id="${data.id}"
-                  class="favorite-snippet-btn w-9 h-9 rounded-lg bg-surface-2 hover:bg-amber-500/10 border border-border flex items-center justify-center cursor-pointer transition group"
-                  title="${data.isFavorite ? "Remove Favorite" : "Add Favorite"}"
-                >
-                  <i class="ti ${data.isFavorite ? "ti-star-filled" : "ti-star"} ${data.isFavorite ? "text-amber-400" : "text-secondary group-hover:text-amber-400"}  text-sm lg:text-base transition-all"></i>
-                </button>
-              `
-              : ""
-          }
+          <button
+            type="button"
+            data-id="${data.id}"
+            class="pin-${itemName}-btn w-9 h-9 rounded-lg bg-surface-2 hover:bg-amber-500/10 border border-border flex items-center justify-center cursor-pointer transition group"
+            title="${data.pinned ? `Unpin ${capitalize(itemName)}` : `Pin ${capitalize(itemName)}`}"
+          >
+            <i
+              class="ti ${data.pinned ? "ti-pinned-filled" : "ti-pin"} text-amber-400 group-hover:text-amber-400 text-base lg:text-lg transition-all"
+            ></i>
+          </button>
 
           <button
             type="button"
@@ -118,34 +109,18 @@ export const MindItemComponent = {
             data-id="${data.id}"
             class="dropdown-menu absolute right-0 mt-1.5 w-48 rounded-xl border border-border bg-surface p-1 shadow-xl hidden z-30 flex-col gap-0.5"
           >
-            ${
-              isNote
-                ? `
-                  <button
-                    type="button"
-                    data-id="${data.id}"
-                    class="pin-note-btn flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium border-0 bg-transparent text-secondary hover:text-color hover:bg-surface-2 transition cursor-pointer"
-                  >
-                    <i class="ti ${data.pinned ? "ti-pinned-filled" : "ti-pin"} text-amber-400 text-xs"></i>
-                    <span>${data.pinned ? "Unpin Note" : "Pin Note"}</span>
-                  </button>
-                `
-                : ""
-            }
-            ${
-              isSnippet
-                ? `
-                  <button
-                    type="button"
-                    data-id="${data.id}"
-                    class="favorite-snippet-btn flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium border-0 bg-transparent text-secondary hover:text-color hover:bg-surface-2 transition cursor-pointer"
-                  >
-                    <i class="ti ${data.isFavorite ? "ti-star-filled" : "ti-star"} text-amber-400 text-xs"></i>
-                    <span>${data.isFavorite ? "Remove Favorite" : "Add Favorite"}</span>
-                  </button>
-                `
-                : ""
-            }
+            <button
+              type="button"
+              data-id="${data.id}"
+              class="pin-${itemName}-btn flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium border-0 bg-transparent text-secondary hover:text-color hover:bg-surface-2 transition cursor-pointer"
+            >
+              <i
+                class="ti ${
+                  data.pinned ? "ti-pinned-filled" : "ti-pin"
+                } text-amber-400 text-xs"
+              ></i>
+              <span>${data.pinned ? `Unpin ${capitalize(itemName)}` : `Pin ${capitalize(itemName)}`}</span>
+            </button>
 
             <button
               type="button"
@@ -194,32 +169,29 @@ export const MindItemComponent = {
 
   renderNote(note) {
     const categoryBadge = this._getCategoryBadgeHtml(note.category);
-    const tagsHtml = this._renderTagsHtml(note.tags);
+    const tagIdsHtml = this._renderTagsHtml(note.tagIds);
 
     return `
       <div
         data-id="${note.id}"
-        class="note-item group relative flex flex-col justify-between gap-3 p-4 rounded-xl bg-surface-2/40 hover:bg-surface-2/60 transition-all border ${
-          note.pinned ? "border-amber-500/40 shadow-xs" : "border-border/40"
-        }"
+        class="note-item group relative flex flex-col justify-between gap-3 p-4 rounded-xl bg-surface-2/40 hover:bg-surface-2/60 transition-all border border-border/40 shadow-xs"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="flex flex-col min-w-0 w-full gap-1.5">
             <div class="flex items-center gap-2 flex-wrap">
-              <span
-                class="inline-flex items-center gap-1 rounded-md border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-400"
-              >
-                <i class="ti ti-note text-[11px]"></i> Note
-              </span>
-
               ${categoryBadge}
+
               ${
                 note.pinned
-                  ? `<span class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+                  ? `<span
+                      class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
+                    >
                       <i class="ti ti-pinned-filled text-[11px]"></i> Pinned
                     </span>`
                   : ""
               }
+
+              ${tagIdsHtml}
             </div>
 
             <h3 class="text-base font-bold mt-1 text-color wrap-break-word">
@@ -228,13 +200,16 @@ export const MindItemComponent = {
 
             ${
               note.content
-                ? `<p class="text-xs text-secondary/90 leading-relaxed wrap-break-word whitespace-pre-line mt-1">${note.content}</p>`
+                ? `<p
+                    class="text-xs text-secondary/90 leading-relaxed wrap-break-word whitespace-pre-line mt-1"
+                  >
+                    ${note.content}
+                  </p>`
                 : ""
             }
-            ${tagsHtml}
           </div>
 
-          ${this._renderActionButtons(note, "notes")}
+          ${this._renderActionButtons(note)}
         </div>
 
         <div
@@ -251,33 +226,29 @@ export const MindItemComponent = {
 
   renderSnippet(snippet) {
     const categoryBadge = this._getCategoryBadgeHtml(snippet.category);
-    const tagsHtml = this._renderTagsHtml(snippet.tags);
+    const tagIdsHtml = this._renderTagsHtml(snippet.tagIds);
 
     return `
       <div
         data-id="${snippet.id}"
-        class="snippet-item group relative flex flex-col justify-between gap-3 p-4 rounded-xl bg-surface-2/40 hover:bg-surface-2/60 transition-all border ${
-          snippet.isFavorite
-            ? "border-amber-500/40 shadow-xs"
-            : "border-border/40"
-        }"
+        class="snippet-item group relative flex flex-col justify-between gap-3 p-4 rounded-xl bg-surface-2/40 hover:bg-surface-2/60 transition-all border border-border/40 shadow-xs"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="flex flex-col min-w-0 w-full gap-1.5">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="inline-flex items-center gap-1 rounded-md border border-purple-500/30 bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-400">
-                <i class="ti ti-code text-xs pb-0.5"></i> Snippet
-              </span>
-
               ${categoryBadge}
-
+              
               ${
-                snippet.isFavorite
-                  ? `<span class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
-                      <i class="ti ti-star-filled text-[10px] pb-0.5"></i> Favorite
+                snippet.pinned
+                  ? `<span
+                      class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
+                    >
+                      <i class="ti ti-pinned-filled text-[11px]"></i> Pinned
                     </span>`
                   : ""
               }
+
+              ${tagIdsHtml}
             </div>
 
             <h3 class="text-base font-bold mt-1 text-color wrap-break-word">
@@ -291,7 +262,7 @@ export const MindItemComponent = {
             }
           </div>
 
-          ${this._renderActionButtons(snippet, "snippets")}
+          ${this._renderActionButtons(snippet)}
         </div>
 
         ${
@@ -304,9 +275,9 @@ export const MindItemComponent = {
             : ""
         }
 
-        ${tagsHtml}
-
-        <div class="pt-2 border-t border-border/40 flex items-center justify-between text-[11px] text-muted">
+        <div
+          class="pt-2 border-t border-border/40 flex items-center justify-between text-[11px] text-muted"
+        >
           <span class="flex items-center gap-1.5">
             <i class="ti ti-calendar-time text-sm pb-0.5"></i>
             ${snippet.createdAt || "Recently"}
@@ -318,7 +289,7 @@ export const MindItemComponent = {
 
   renderBookmark(bookmark) {
     const categoryBadge = this._getCategoryBadgeHtml(bookmark.category);
-    const tagsHtml = this._renderTagsHtml(bookmark.tags);
+    const tagIdsHtml = this._renderTagsHtml(bookmark.tagIds);
 
     return `
       <div
@@ -328,11 +299,19 @@ export const MindItemComponent = {
         <div class="flex items-start justify-between gap-3">
           <div class="flex flex-col min-w-0 w-full gap-1.5">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
-                <i class="ti ti-bookmark text-[11px]"></i> Bookmark
-              </span>
-
               ${categoryBadge}
+
+              ${
+                bookmark.pinned
+                  ? `<span
+                      class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
+                    >
+                      <i class="ti ti-pinned-filled text-[11px]"></i> Pinned
+                    </span>`
+                  : ""
+              }
+
+              ${tagIdsHtml}
             </div>
 
             <h3 class="text-base font-bold mt-1 text-color wrap-break-word">
@@ -344,7 +323,6 @@ export const MindItemComponent = {
                 ? `<p class="text-xs text-secondary/90 leading-relaxed wrap-break-word">${bookmark.description}</p>`
                 : ""
             }
-
             ${
               bookmark.url
                 ? `
@@ -360,14 +338,14 @@ export const MindItemComponent = {
                 `
                 : ""
             }
-
-            ${tagsHtml}
           </div>
 
-          ${this._renderActionButtons(bookmark, "bookmarks")}
+          ${this._renderActionButtons(bookmark)}
         </div>
 
-        <div class="pt-2 border-t border-border/40 flex items-center justify-between text-[11px] text-muted">
+        <div
+          class="pt-2 border-t border-border/40 flex items-center justify-between text-[11px] text-muted"
+        >
           <span class="flex items-center gap-1.5">
             <i class="ti ti-calendar-time text-sm pb-0.5"></i>
             ${bookmark.createdAt || "Recently"}
@@ -379,7 +357,7 @@ export const MindItemComponent = {
 
   renderCheatSheet(cheatSheet) {
     const categoryBadge = this._getCategoryBadgeHtml(cheatSheet.category);
-    const tagsHtml = this._renderTagsHtml(cheatSheet.tags);
+    const tagIdsHtml = this._renderTagsHtml(cheatSheet.tagIds);
     const items = Array.isArray(cheatSheet.items) ? cheatSheet.items : [];
 
     return `
@@ -390,11 +368,19 @@ export const MindItemComponent = {
         <div class="flex items-start justify-between gap-3">
           <div class="flex flex-col min-w-0 w-full gap-1.5">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
-                <i class="ti ti-stack-2 text-[11px]"></i> CheatSheet
-              </span>
-
               ${categoryBadge}
+
+              ${
+                cheatSheet.pinned
+                  ? `<span
+                      class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
+                    >
+                      <i class="ti ti-pinned-filled text-[11px]"></i> Pinned
+                    </span>`
+                  : ""
+              }
+
+              ${tagIdsHtml}
             </div>
 
             <h3 class="text-base font-bold mt-1 text-color wrap-break-word">
@@ -408,31 +394,37 @@ export const MindItemComponent = {
             }
           </div>
 
-          ${this._renderActionButtons(cheatSheet, "cheatsheets")}
+          ${this._renderActionButtons(cheatSheet)}
         </div>
 
         ${
           items.length > 0
             ? `
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                ${items
-                  .map(
-                    (it) => `
-                  <div class="flex items-center justify-between gap-2 p-2 rounded-lg bg-surface/80 border border-border/40 text-xs">
-                    <span class="font-bold text-color/90 truncate">${it.key}</span>
-                    <span class="font-mono text-secondary truncate">${it.value}</span>
-                  </div>
-                `,
-                  )
-                  .join("")}
-              </div>
-            `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                  ${items
+                    .map(
+                      (it) => `
+                      <div
+                        class="flex items-center justify-between gap-2 p-2 rounded-lg bg-surface/80 border border-border/40 text-xs"
+                      >
+                        <span class="font-bold text-color/90 truncate"
+                          >${it.key}</span
+                        >
+                        <span class="font-mono text-secondary truncate"
+                          >${it.value}</span
+                        >
+                      </div>
+                    `,
+                    )
+                    .join("")}
+                </div>
+              `
             : ""
         }
 
-        ${tagsHtml}
-
-        <div class="pt-2 border-t border-border/40 flex items-center justify-between text-[11px] text-muted">
+        <div
+          class="pt-2 border-t border-border/40 flex items-center justify-between text-[11px] text-muted"
+        >
           <span class="flex items-center gap-1.5">
             <i class="ti ti-calendar-time text-sm pb-0.5"></i>
             ${cheatSheet.createdAt || "Recently"}

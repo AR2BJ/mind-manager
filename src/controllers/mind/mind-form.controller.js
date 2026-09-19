@@ -4,16 +4,23 @@ import {
   NOTE_CATEGORIES,
   SNIPPET_CATEGORIES,
 } from "@/utils/constants/options-value.constants";
+import { StateManager, state } from "@/models/state.model.js";
+import {
+  capitalize,
+  mapTagIdsToObjects,
+  processTagPipeline,
+} from "@/utils/helpers";
 
 import { AutocompleteComponent } from "@/components/ui/autocomplete.component.js";
+import { ComboboxComponent } from "@/components/ui/combobox.component.js";
 import { GlobalLoaderService } from "@/services/loader.service.js";
 import { MindService } from "@/services/mind.service.js";
 import { NotificationService } from "@/services/notification.service.js";
-import { StateManager } from "@/models/state.model.js";
 
 let pendingDeleteId = null;
 let pendingEditId = null;
 
+// Category Autocompletes
 let createNoteCategoryAutocomplete = null;
 let createSnippetCategoryAutocomplete = null;
 let createBookmarkCategoryAutocomplete = null;
@@ -23,6 +30,17 @@ let editNoteCategoryAutocomplete = null;
 let editSnippetCategoryAutocomplete = null;
 let editBookmarkCategoryAutocomplete = null;
 let editCheatSheetCategoryAutocomplete = null;
+
+// Tag Comboboxes
+let createNoteTagCombobox = null;
+let createSnippetTagCombobox = null;
+let createBookmarkTagCombobox = null;
+let createCheatSheetTagCombobox = null;
+
+let editNoteTagCombobox = null;
+let editSnippetTagCombobox = null;
+let editBookmarkTagCombobox = null;
+let editCheatSheetTagCombobox = null;
 
 export function setPendingDeleteId(id) {
   pendingDeleteId = id;
@@ -40,11 +58,13 @@ export const MindFormController = {
     this.mainController = mainController;
 
     this.setupCreateAutocompletes();
+    this.setupCreateTagComboboxes();
     this.bindFormEvents();
   },
 
   refreshUI() {
     this.setupCreateAutocompletes();
+    this.setupCreateTagComboboxes();
     this.updateAddButtonText();
     this.toggleFormTabFields();
   },
@@ -170,9 +190,98 @@ export const MindFormController = {
     }
   },
 
+  setupCreateTagComboboxes() {
+    const globalTags = StateManager.getState().tags || [];
+
+    // Note Tags
+    const noteTagContainer = document.getElementById(
+      "create-note-tags-combobox",
+    );
+    if (noteTagContainer) {
+      if (createNoteTagCombobox) createNoteTagCombobox.destroy();
+      createNoteTagCombobox = new ComboboxComponent(
+        noteTagContainer,
+        globalTags,
+        {
+          label: "Tags",
+          iconClass: "ti ti-tag text-brand/80",
+          itemTitle: "name",
+          itemValue: "id",
+          placeholder: "Select or add tags...",
+          allowCustom: true,
+          multiple: true,
+        },
+      );
+    }
+
+    // Snippet Tags
+    const snippetTagContainer = document.getElementById(
+      "create-snippet-tags-combobox",
+    );
+    if (snippetTagContainer) {
+      if (createSnippetTagCombobox) createSnippetTagCombobox.destroy();
+      createSnippetTagCombobox = new ComboboxComponent(
+        snippetTagContainer,
+        globalTags,
+        {
+          label: "Tags",
+          iconClass: "ti ti-tag text-brand/80",
+          itemTitle: "name",
+          itemValue: "id",
+          placeholder: "Select or add tags...",
+          allowCustom: true,
+          multiple: true,
+        },
+      );
+    }
+
+    // Bookmark Tags
+    const bookmarkTagContainer = document.getElementById(
+      "create-bookmark-tags-combobox",
+    );
+    if (bookmarkTagContainer) {
+      if (createBookmarkTagCombobox) createBookmarkTagCombobox.destroy();
+      createBookmarkTagCombobox = new ComboboxComponent(
+        bookmarkTagContainer,
+        globalTags,
+        {
+          label: "Tags",
+          iconClass: "ti ti-tag text-brand/80",
+          itemTitle: "name",
+          itemValue: "id",
+          placeholder: "Select or add tags...",
+          allowCustom: true,
+          multiple: true,
+        },
+      );
+    }
+
+    // CheatSheet Tags
+    const cheatTagContainer = document.getElementById(
+      "create-cheatsheet-tags-combobox",
+    );
+    if (cheatTagContainer) {
+      if (createCheatSheetTagCombobox) createCheatSheetTagCombobox.destroy();
+      createCheatSheetTagCombobox = new ComboboxComponent(
+        cheatTagContainer,
+        globalTags,
+        {
+          label: "Tags",
+          iconClass: "ti ti-tag text-brand/80",
+          itemTitle: "name",
+          itemValue: "id",
+          placeholder: "Select or add tags...",
+          allowCustom: true,
+          multiple: true,
+        },
+      );
+    }
+  },
+
   populateEditModal(itemId) {
     this.toggleFormTabFields();
 
+    // Destroy existing Category Autocompletes
     if (editNoteCategoryAutocomplete) editNoteCategoryAutocomplete.destroy();
     if (editSnippetCategoryAutocomplete)
       editSnippetCategoryAutocomplete.destroy();
@@ -181,8 +290,15 @@ export const MindFormController = {
     if (editCheatSheetCategoryAutocomplete)
       editCheatSheetCategoryAutocomplete.destroy();
 
+    // Destroy existing Tag Comboboxes
+    if (editNoteTagCombobox) editNoteTagCombobox.destroy();
+    if (editSnippetTagCombobox) editSnippetTagCombobox.destroy();
+    if (editBookmarkTagCombobox) editBookmarkTagCombobox.destroy();
+    if (editCheatSheetTagCombobox) editCheatSheetTagCombobox.destroy();
+
     const activeTab = StateManager.getActiveTab() || "notes";
     const stateData = StateManager.getState();
+    const globalTags = stateData.tags || [];
 
     let currentItem = null;
     if (activeTab === "notes") {
@@ -208,6 +324,8 @@ export const MindFormController = {
     const titleInput = document.getElementById("edit-item-title");
     if (titleInput) titleInput.value = currentItem.title || "";
 
+    const mappedTags = mapTagIdsToObjects(currentItem.tagIds || [], globalTags);
+
     if (activeTab === "notes") {
       const contentInput = document.getElementById("edit-note-content");
       const pinnedCheckbox = document.getElementById("edit-note-pinned");
@@ -231,6 +349,26 @@ export const MindFormController = {
         editNoteCategoryAutocomplete.setValue(
           currentItem.category || "general",
         );
+      }
+
+      const editNoteTagContainer = document.getElementById(
+        "edit-note-tags-combobox",
+      );
+      if (editNoteTagContainer) {
+        editNoteTagCombobox = new ComboboxComponent(
+          editNoteTagContainer,
+          globalTags,
+          {
+            label: "Tags",
+            iconClass: "ti ti-tag text-brand/80",
+            itemTitle: "name",
+            itemValue: "id",
+            placeholder: "Select or add tags...",
+            allowCustom: true,
+            multiple: true,
+          },
+        );
+        editNoteTagCombobox.setValue(mappedTags);
       }
     } else if (activeTab === "snippets") {
       const codeInput = document.getElementById("edit-snippet-code");
@@ -259,6 +397,26 @@ export const MindFormController = {
           currentItem.category || "javascript",
         );
       }
+
+      const editSnippetTagContainer = document.getElementById(
+        "edit-snippet-tags-combobox",
+      );
+      if (editSnippetTagContainer) {
+        editSnippetTagCombobox = new ComboboxComponent(
+          editSnippetTagContainer,
+          globalTags,
+          {
+            label: "Tags",
+            iconClass: "ti ti-tag text-brand/80",
+            itemTitle: "name",
+            itemValue: "id",
+            placeholder: "Select or add tags...",
+            allowCustom: true,
+            multiple: true,
+          },
+        );
+        editSnippetTagCombobox.setValue(mappedTags);
+      }
     } else if (activeTab === "bookmarks") {
       const urlInput = document.getElementById("edit-bookmark-url");
       const descInput = document.getElementById("edit-bookmark-desc");
@@ -284,6 +442,26 @@ export const MindFormController = {
           currentItem.category || "general",
         );
       }
+
+      const editBookmarkTagContainer = document.getElementById(
+        "edit-bookmark-tags-combobox",
+      );
+      if (editBookmarkTagContainer) {
+        editBookmarkTagCombobox = new ComboboxComponent(
+          editBookmarkTagContainer,
+          globalTags,
+          {
+            label: "Tags",
+            itemTitle: "name",
+            iconClass: "ti ti-tag text-brand/80",
+            itemValue: "id",
+            placeholder: "Select or add tags...",
+            allowCustom: true,
+            multiple: true,
+          },
+        );
+        editBookmarkTagCombobox.setValue(mappedTags);
+      }
     } else if (activeTab === "cheatsheets") {
       const descInput = document.getElementById("edit-cheatsheet-desc");
       if (descInput) descInput.value = currentItem.description || "";
@@ -305,6 +483,26 @@ export const MindFormController = {
         editCheatSheetCategoryAutocomplete.setValue(
           currentItem.category || "general",
         );
+      }
+
+      const editCheatTagContainer = document.getElementById(
+        "edit-cheatsheet-tags-combobox",
+      );
+      if (editCheatTagContainer) {
+        editCheatSheetTagCombobox = new ComboboxComponent(
+          editCheatTagContainer,
+          globalTags,
+          {
+            label: "Tags",
+            iconClass: "ti ti-tag text-brand/80",
+            itemTitle: "name",
+            itemValue: "id",
+            placeholder: "Select or add tags...",
+            allowCustom: true,
+            multiple: true,
+          },
+        );
+        editCheatSheetTagCombobox.setValue(mappedTags);
       }
     }
   },
@@ -335,54 +533,188 @@ export const MindFormController = {
               ? createNoteCategoryAutocomplete.getValue()
               : "general";
 
+            const rawSelectedTags = createNoteTagCombobox
+              ? createNoteTagCombobox.getSelectedItems()
+              : [];
+            const currentGlobalTags = StateManager.getTags() || [];
+
+            const { assignedTagIds, updatedGlobalTags } = processTagPipeline(
+              rawSelectedTags,
+              currentGlobalTags,
+              "notes",
+            );
+
+            if (!title) {
+              NotificationService.show({
+                type: "error",
+                message: "Note title cannot be empty",
+                icon: "ti-alert-triangle",
+                duration: 5000,
+              });
+              return;
+            }
+
+            const newNotePayload = {
+              title,
+              content,
+              category,
+              pinned,
+              tagIds: assignedTagIds,
+            };
+
             const updatedNotes = MindService.createNote(
               currentStateData.notes || [],
-              { title, content, category, pinned },
+              newNotePayload,
             );
-            StateManager.save({ notes: updatedNotes });
+            StateManager.save({ tags: updatedGlobalTags, notes: updatedNotes });
           } else if (activeTab === "snippets") {
             const code =
               document.getElementById("create-snippet-code")?.value || "";
             const description =
               document.getElementById("create-snippet-desc")?.value || "";
-            const favorite =
-              document.getElementById("create-snippet-favorite")?.checked ||
+            const pinned =
+              document.getElementById("create-snippet-pinned")?.checked ||
               false;
             const category = createSnippetCategoryAutocomplete
               ? createSnippetCategoryAutocomplete.getValue()
               : "javascript";
 
+            const rawSelectedTags = createSnippetTagCombobox
+              ? createSnippetTagCombobox.getSelectedItems()
+              : [];
+            const currentGlobalTags = StateManager.getTags() || [];
+
+            const { assignedTagIds, updatedGlobalTags } = processTagPipeline(
+              rawSelectedTags,
+              currentGlobalTags,
+              "snippets",
+            );
+
+            if (!title && !code) {
+              NotificationService.show({
+                type: "error",
+                message: "Snippet title or code cannot be empty",
+                icon: "ti-alert-triangle",
+                duration: 5000,
+              });
+              return;
+            }
+
+            const newSnippetPayload = {
+              title,
+              code,
+              description,
+              category,
+              pinned,
+              tagIds: assignedTagIds,
+            };
+
             const updatedSnippets = MindService.createSnippet(
               currentStateData.snippets || [],
-              { title, code, description, category, favorite },
+              newSnippetPayload,
             );
-            StateManager.save({ snippets: updatedSnippets });
+
+            StateManager.save({
+              tags: updatedGlobalTags,
+              snippets: updatedSnippets,
+            });
           } else if (activeTab === "bookmarks") {
             const url =
               document.getElementById("create-bookmark-url")?.value || "";
             const description =
               document.getElementById("create-bookmark-desc")?.value || "";
+            const pinned =
+              document.getElementById("create-bookmark-pinned")?.checked ||
+              false;
             const category = createBookmarkCategoryAutocomplete
               ? createBookmarkCategoryAutocomplete.getValue()
               : "general";
 
+            const rawSelectedTags = createBookmarkTagCombobox
+              ? createBookmarkTagCombobox.getSelectedItems()
+              : [];
+            const currentGlobalTags = StateManager.getTags() || [];
+
+            const { assignedTagIds, updatedGlobalTags } = processTagPipeline(
+              rawSelectedTags,
+              currentGlobalTags,
+              "bookmarks",
+            );
+
+            if (!title && !url) {
+              NotificationService.show({
+                type: "error",
+                message: "Bookmark title or URL cannot be empty",
+                icon: "ti-alert-triangle",
+                duration: 5000,
+              });
+              return;
+            }
+
+            const newBookmarkPayload = {
+              title,
+              url,
+              description,
+              category,
+              pinned,
+              tagIds: assignedTagIds,
+            };
+
             const updatedBookmarks = MindService.createBookmark(
               currentStateData.bookmarks || [],
-              { title, url, description, category },
+              newBookmarkPayload,
             );
-            StateManager.save({ bookmarks: updatedBookmarks });
+            StateManager.save({
+              tags: updatedGlobalTags,
+              bookmarks: updatedBookmarks,
+            });
           } else if (activeTab === "cheatsheets") {
             const description =
               document.getElementById("create-cheatsheet-desc")?.value || "";
+            const pinned =
+              document.getElementById("create-cheatsheet-pinned")?.checked ||
+              false;
             const category = createCheatSheetCategoryAutocomplete
               ? createCheatSheetCategoryAutocomplete.getValue()
               : "general";
 
+            const rawSelectedTags = createCheatSheetTagCombobox
+              ? createCheatSheetTagCombobox.getSelectedItems()
+              : [];
+            const currentGlobalTags = StateManager.getTags() || [];
+
+            const { assignedTagIds, updatedGlobalTags } = processTagPipeline(
+              rawSelectedTags,
+              currentGlobalTags,
+              "cheatsheets",
+            );
+
+            if (!title) {
+              NotificationService.show({
+                type: "error",
+                message: "Cheatsheet title cannot be empty",
+                icon: "ti-alert-triangle",
+                duration: 5000,
+              });
+              return;
+            }
+
+            const newCheatSheetPayload = {
+              title,
+              description,
+              category,
+              pinned,
+              tagIds: assignedTagIds,
+            };
+
             const updatedCheatSheets = MindService.createCheatSheet(
               currentStateData.cheatsheets || [],
-              { title, description, category },
+              newCheatSheetPayload,
             );
-            StateManager.save({ cheatsheets: updatedCheatSheets });
+            StateManager.save({
+              tags: updatedGlobalTags,
+              cheatsheets: updatedCheatSheets,
+            });
           }
 
           this.resetForms();
@@ -394,9 +726,11 @@ export const MindFormController = {
             this.mainController.refreshUI();
           }
 
+          const type = activeTab.slice(0, activeTab.length - 1);
+
           NotificationService.show({
             type: "success",
-            message: `Item created successfully!`,
+            message: `${capitalize(type)} "${title}" created successfully!`,
             icon: "ti-check",
             duration: 5000,
           });
@@ -415,20 +749,53 @@ export const MindFormController = {
 
     addBtn?.addEventListener("click", handleCreateItem);
 
+    titleInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleCreateItem();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      const deleteModal = document.getElementById("delete-modal");
+      const editModal = document.getElementById("edit-modal");
+
+      const deleteOpen =
+        deleteModal && !deleteModal.classList.contains("hidden");
+      const editOpen = editModal && !editModal.classList.contains("hidden");
+
+      if (!deleteOpen && !editOpen) return;
+
+      if (e.key === "Escape") {
+        if (deleteOpen) this.mainController.toggleModal("delete-modal", false);
+        if (editOpen) this.mainController.toggleModal("edit-modal", false);
+      }
+
+      if (e.key === "Enter" && e.ctrlKey) {
+        if (deleteOpen) this.executeDelete();
+        if (editOpen) this.executeEdit();
+      }
+    });
+
     const addClick = (id, cb) =>
       document.getElementById(id)?.addEventListener("click", cb);
+
     addClick("confirm-delete-btn", () => this.executeDelete());
+    addClick("confirm-delete", () => this.executeDelete());
+    addClick("cancel-delete-btn", () =>
+      this.mainController.toggleModal("delete-modal", false),
+    );
+    addClick("cancel-delete", () =>
+      this.mainController.toggleModal("delete-modal", false),
+    );
+
     addClick("confirm-edit", () => this.executeEdit());
-    addClick("cancel-edit", () => {
-      if (this.mainController?.toggleModal) {
-        this.mainController.toggleModal("edit-modal", false);
-      }
-    });
-    addClick("cancel-edit-modal", () => {
-      if (this.mainController?.toggleModal) {
-        this.mainController.toggleModal("edit-modal", false);
-      }
-    });
+    addClick("cancel-edit", () =>
+      this.mainController.toggleModal("edit-modal", false),
+    );
+    addClick("cancel-edit-modal", () =>
+      this.mainController.toggleModal("edit-modal", false),
+    );
   },
 
   resetForms() {
@@ -451,6 +818,11 @@ export const MindFormController = {
       const el = document.getElementById(id);
       if (el) el.checked = false;
     });
+
+    if (createNoteTagCombobox) createNoteTagCombobox.clear();
+    if (createSnippetTagCombobox) createSnippetTagCombobox.clear();
+    if (createBookmarkTagCombobox) createBookmarkTagCombobox.clear();
+    if (createCheatSheetTagCombobox) createCheatSheetTagCombobox.clear();
   },
 
   executeDelete() {
@@ -460,48 +832,83 @@ export const MindFormController = {
     const activeTab = StateManager.getActiveTab() || "notes";
     const stateData = StateManager.getState();
 
-    GlobalLoaderService.show(`Deleting item...`);
-    setTimeout(() => {
-      try {
-        if (activeTab === "notes") {
-          const notes = MindService.deleteNote(stateData.notes || [], id);
-          StateManager.save({ notes });
-        } else if (activeTab === "snippets") {
-          const snippets = MindService.deleteSnippet(
-            stateData.snippets || [],
-            id,
-          );
-          StateManager.save({ snippets });
-        } else if (activeTab === "bookmarks") {
-          const bookmarks = MindService.deleteBookmark(
-            stateData.bookmarks || [],
-            id,
-          );
-          StateManager.save({ bookmarks });
-        } else if (activeTab === "cheatsheets") {
-          const cheatsheets = MindService.deleteCheatSheet(
-            stateData.cheatsheets || [],
-            id,
-          );
-          StateManager.save({ cheatsheets });
+    let list = [];
+    if (activeTab === "notes") list = stateData.notes || [];
+    else if (activeTab === "snippets") list = stateData.snippets || [];
+    else if (activeTab === "bookmarks") list = stateData.bookmarks || [];
+    else if (activeTab === "cheatsheets") list = stateData.cheatsheets || [];
+
+    const itemToDelete = list.find((item) => String(item.id) === String(id));
+
+    if (itemToDelete) {
+      GlobalLoaderService.show(`Deleting item...`);
+      setTimeout(() => {
+        try {
+          if (activeTab === "notes") {
+            const notes = MindService.deleteNote(stateData.notes || [], id);
+            StateManager.save({ notes });
+          } else if (activeTab === "snippets") {
+            const snippets = MindService.deleteSnippet(
+              stateData.snippets || [],
+              id,
+            );
+            StateManager.save({ snippets });
+          } else if (activeTab === "bookmarks") {
+            const bookmarks = MindService.deleteBookmark(
+              stateData.bookmarks || [],
+              id,
+            );
+            StateManager.save({ bookmarks });
+          } else if (activeTab === "cheatsheets") {
+            const cheatsheets = MindService.deleteCheatSheet(
+              stateData.cheatsheets || [],
+              id,
+            );
+            StateManager.save({ cheatsheets });
+          }
+
+          if (this.mainController?.toggleModal)
+            this.mainController.toggleModal("delete-modal", false);
+          pendingDeleteId = null;
+
+          if (this.mainController?.refreshUI) this.mainController.refreshUI();
+
+          NotificationService.show({
+            type: "error",
+            message: `Item deleted successfully`,
+            icon: "ti-trash",
+            duration: 5000,
+            undoAction: () => {
+              const restoredState = StateManager.getState();
+              if (activeTab === "notes") {
+                StateManager.save({
+                  notes: [itemToDelete, ...(restoredState.notes || [])],
+                });
+              } else if (activeTab === "snippets") {
+                StateManager.save({
+                  snippets: [itemToDelete, ...(restoredState.snippets || [])],
+                });
+              } else if (activeTab === "bookmarks") {
+                StateManager.save({
+                  bookmarks: [itemToDelete, ...(restoredState.bookmarks || [])],
+                });
+              } else if (activeTab === "cheatsheets") {
+                StateManager.save({
+                  cheatsheets: [
+                    itemToDelete,
+                    ...(restoredState.cheatsheets || []),
+                  ],
+                });
+              }
+              if (this.mainController?.refreshUI)
+                this.mainController.refreshUI();
+            },
+          });
+        } finally {
+          GlobalLoaderService.hide();
         }
-
-        if (this.mainController?.toggleModal)
-          this.mainController.toggleModal("delete-modal", false);
-        pendingDeleteId = null;
-
-        if (this.mainController?.refreshUI) this.mainController.refreshUI();
-
-        NotificationService.show({
-          type: "error",
-          message: `Item deleted successfully`,
-          icon: "ti-trash",
-          duration: 5000,
-        });
-      } finally {
-        GlobalLoaderService.hide();
-      }
-    }, 30);
+      }, 30);
+    }
   },
 
   executeEdit() {
@@ -515,8 +922,18 @@ export const MindFormController = {
     setTimeout(() => {
       try {
         const stateData = StateManager.getState();
+        const currentGlobalTags = stateData.tags || [];
 
         if (activeTab === "notes") {
+          const rawSelectedTags = editNoteTagCombobox
+            ? editNoteTagCombobox.getValue()
+            : [];
+          const { updatedGlobalTags, assignedTagIds } = processTagPipeline(
+            rawSelectedTags,
+            currentGlobalTags,
+            "notes",
+          );
+
           const updatedNotes = MindService.editNote(
             stateData.notes || [],
             pendingEditId,
@@ -527,10 +944,20 @@ export const MindFormController = {
               category: editNoteCategoryAutocomplete
                 ? editNoteCategoryAutocomplete.getValue()
                 : "general",
+              tagIds: assignedTagIds,
             },
           );
-          StateManager.save({ notes: updatedNotes });
+          StateManager.save({ tags: updatedGlobalTags, notes: updatedNotes });
         } else if (activeTab === "snippets") {
+          const rawSelectedTags = editSnippetTagCombobox
+            ? editSnippetTagCombobox.getValue()
+            : [];
+          const { updatedGlobalTags, assignedTagIds } = processTagPipeline(
+            rawSelectedTags,
+            currentGlobalTags,
+            "snippets",
+          );
+
           const updatedSnippets = MindService.editSnippet(
             stateData.snippets || [],
             pendingEditId,
@@ -543,10 +970,23 @@ export const MindFormController = {
               category: editSnippetCategoryAutocomplete
                 ? editSnippetCategoryAutocomplete.getValue()
                 : "javascript",
+              tagIds: assignedTagIds,
             },
           );
-          StateManager.save({ snippets: updatedSnippets });
+          StateManager.save({
+            tags: updatedGlobalTags,
+            snippets: updatedSnippets,
+          });
         } else if (activeTab === "bookmarks") {
+          const rawSelectedTags = editBookmarkTagCombobox
+            ? editBookmarkTagCombobox.getValue()
+            : [];
+          const { updatedGlobalTags, assignedTagIds } = processTagPipeline(
+            rawSelectedTags,
+            currentGlobalTags,
+            "bookmarks",
+          );
+
           const updatedBookmarks = MindService.editBookmark(
             stateData.bookmarks || [],
             pendingEditId,
@@ -557,10 +997,23 @@ export const MindFormController = {
               category: editBookmarkCategoryAutocomplete
                 ? editBookmarkCategoryAutocomplete.getValue()
                 : "general",
+              tagIds: assignedTagIds,
             },
           );
-          StateManager.save({ bookmarks: updatedBookmarks });
+          StateManager.save({
+            tags: updatedGlobalTags,
+            bookmarks: updatedBookmarks,
+          });
         } else if (activeTab === "cheatsheets") {
+          const rawSelectedTags = editCheatSheetTagCombobox
+            ? editCheatSheetTagCombobox.getValue()
+            : [];
+          const { updatedGlobalTags, assignedTagIds } = processTagPipeline(
+            rawSelectedTags,
+            currentGlobalTags,
+            "cheatsheets",
+          );
+
           const updatedCheatSheets = MindService.editCheatSheet(
             stateData.cheatsheets || [],
             pendingEditId,
@@ -571,9 +1024,13 @@ export const MindFormController = {
               category: editCheatSheetCategoryAutocomplete
                 ? editCheatSheetCategoryAutocomplete.getValue()
                 : "general",
+              tagIds: assignedTagIds,
             },
           );
-          StateManager.save({ cheatsheets: updatedCheatSheets });
+          StateManager.save({
+            tags: updatedGlobalTags,
+            cheatsheets: updatedCheatSheets,
+          });
         }
 
         if (this.mainController?.toggleModal) {

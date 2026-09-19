@@ -36,8 +36,6 @@ export const MindController = {
     MindFormController.init(this);
     MindActionController.init(this);
 
-    // SettingsController.init();
-
     this.bindStaticEvents();
     this.bindMenuToggle();
     this.bindActionMenuToggle();

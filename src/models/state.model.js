@@ -13,6 +13,7 @@ import {
 import { eventBus } from "@/services/event-bus.service.js";
 
 export const state = {
+  tags: [],
   notes: [],
   snippets: [],
   bookmarks: [],
@@ -61,11 +62,13 @@ export const StateManager = {
   reloadFromStorage(notify = true) {
     const saved = loadFromStorage();
     if (saved) {
+      state.tags = saved.tags || [];
       state.notes = saved.notes || [];
       state.snippets = saved.snippets || [];
       state.bookmarks = saved.bookmarks || [];
       state.cheatsheets = saved.cheatsheets || [];
     } else {
+      state.tags = [];
       state.notes = [];
       state.snippets = [];
       state.bookmarks = [];
@@ -80,6 +83,7 @@ export const StateManager = {
   },
 
   dispatchStateEvents() {
+    eventBus.emit("store:tags:changed", state.tags);
     eventBus.emit("store:notes:changed", state.notes);
     eventBus.emit("store:snippets:changed", state.snippets);
     eventBus.emit("store:bookmarks:changed", state.bookmarks);
@@ -109,6 +113,10 @@ export const StateManager = {
     return state.activeTab;
   },
 
+  getTags() {
+    return state.tags || [];
+  },
+
   getNotes() {
     return state.notes || [];
   },
@@ -129,9 +137,10 @@ export const StateManager = {
     const tab = state.activeTab;
 
     if (tab === "notes") return NOTE_CATEGORIES || [];
-    else if (tab === "snippets") return SNIPPET_CATEGORIES || [];
-    else if (tab === "bookmarks") return BOOKMARK_CATEGORIES || [];
-    else if (tab === "cheatsheets") return CHEATSHEET_CATEGORIES || [];
+    if (tab === "snippets") return SNIPPET_CATEGORIES || [];
+    if (tab === "bookmarks") return BOOKMARK_CATEGORIES || [];
+    if (tab === "cheatsheets") return CHEATSHEET_CATEGORIES || [];
+    return [];
   },
 
   getActiveUIState() {
@@ -155,14 +164,14 @@ export const StateManager = {
 
     if (!Array.isArray(list)) return [];
 
-    // Filter by Category or Category
+    // Filter by Category
     if (ui.selectedCategory && ui.selectedCategory !== "all") {
       list = list.filter(
         (item) => String(item.category) === String(ui.selectedCategory),
       );
     }
 
-    // filterBy
+    // Filter by Custom Flags (Pinned, Favorites)
     if (ui.filterBy && ui.filterBy !== "all") {
       list = this.filterItemsByTab(list, tab, ui.filterBy);
     }
@@ -170,19 +179,38 @@ export const StateManager = {
     // Search Query
     if (ui.searchQuery && ui.searchQuery.trim() !== "") {
       const query = ui.searchQuery.toLowerCase().trim();
-      list = list.filter(
-        (item) =>
-          (item.title || "").toLowerCase().includes(query) ||
-          (item.description || "").toLowerCase().includes(query) ||
-          (item.content || "").toLowerCase().includes(query) ||
-          (item.code || "").toLowerCase().includes(query) ||
-          (item.url || "").toLowerCase().includes(query) ||
-          (Array.isArray(item.tags) &&
-            item.tags.some((t) => t.toLowerCase().includes(query))),
+      const globalTagsMap = new Map(
+        (state.tags || []).map((t) => [t.id, t.name.toLowerCase()]),
       );
+
+      list = list.filter((item) => {
+        const titleMatch = (item.title || "").toLowerCase().includes(query);
+        const descMatch = (item.description || "")
+          .toLowerCase()
+          .includes(query);
+        const contentMatch = (item.content || "").toLowerCase().includes(query);
+        const codeMatch = (item.code || "").toLowerCase().includes(query);
+        const urlMatch = (item.url || "").toLowerCase().includes(query);
+
+        const tagMatch =
+          Array.isArray(item.tagIds) &&
+          item.tagIds.some((tagId) => {
+            const tagName = globalTagsMap.get(tagId);
+            return tagName ? tagName.includes(query) : false;
+          });
+
+        return (
+          titleMatch ||
+          descMatch ||
+          contentMatch ||
+          codeMatch ||
+          urlMatch ||
+          tagMatch
+        );
+      });
     }
 
-    return this.sortItemsByTab(list, tab, ui.sortBy);
+    return this.sortItemsByTab(list, ui.sortBy);
   },
 
   filterItemsByTab(items, tab, filterValue) {
@@ -193,7 +221,18 @@ export const StateManager = {
       }
 
       if (tab === "snippets") {
-        if (filterValue === "favorites") return Boolean(item.isFavorite);
+        if (filterValue === "pinned") return Boolean(item.pinned);
+        if (filterValue === "unpinned") return !item.pinned;
+      }
+
+      if (tab === "bookmarks") {
+        if (filterValue === "pinned") return Boolean(item.pinned);
+        if (filterValue === "unpinned") return !item.pinned;
+      }
+
+      if (tab === "cheatsheets") {
+        if (filterValue === "pinned") return Boolean(item.pinned);
+        if (filterValue === "unpinned") return !item.pinned;
       }
 
       return true;
@@ -213,6 +252,8 @@ export const StateManager = {
           return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
         case "updated_desc":
           return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
+        case "updated_asc":
+          return new Date(a.updatedAt || 0) - new Date(b.updatedAt || 0);
         default:
           return 0;
       }
@@ -279,6 +320,7 @@ export const StateManager = {
     Object.assign(state, data);
 
     saveToStorage({
+      tags: state.tags,
       notes: state.notes,
       snippets: state.snippets,
       bookmarks: state.bookmarks,

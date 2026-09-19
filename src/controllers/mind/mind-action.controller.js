@@ -32,21 +32,18 @@ export const MindActionController = {
       type: "info",
       message: !targetNote.pinned ? "Note pinned" : "Note unpinned",
       icon: !targetNote.pinned ? "ti-pinned-filled" : "ti-pin",
-      duration: 3000,
+      duration: 5000,
     });
   },
 
-  handleToggleSnippetFavorite(snippetId) {
+  handleToggleSnippetPin(snippetId) {
     const snippets = StateManager.getSnippets() || [];
     const targetSnippet = snippets.find(
       (s) => String(s.id) === String(snippetId),
     );
     if (!targetSnippet) return;
 
-    const updatedSnippets = MindService.toggleSnippetFavorite(
-      snippets,
-      snippetId,
-    );
+    const updatedSnippets = MindService.toggleSnippetPin(snippets, snippetId);
     StateManager.save({ snippets: updatedSnippets });
 
     if (
@@ -58,11 +55,67 @@ export const MindActionController = {
 
     NotificationService.show({
       type: "info",
-      message: !targetSnippet.isFavorite
-        ? `Marked "${targetSnippet.title}" as favorite`
-        : `Removed "${targetSnippet.title}" from favorites`,
-      icon: !targetSnippet.isFavorite ? "ti-star-filled" : "ti-star",
-      duration: 3000,
+      message: !targetSnippet.pinned ? "Snippet pinned" : "Snippet unpinned",
+      icon: !targetSnippet.pinned ? "ti-pinned-filled" : "ti-pin",
+      duration: 5000,
+    });
+  },
+
+  handleToggleBookmarkPin(bookmarkId) {
+    const bookmarks = StateManager.getBookmarks() || [];
+    const targetBookmark = bookmarks.find(
+      (b) => String(b.id) === String(bookmarkId),
+    );
+    if (!targetBookmark) return;
+
+    const updatedBookmarks = MindService.toggleBookmarkPin(
+      bookmarks,
+      bookmarkId,
+    );
+    StateManager.save({ bookmarks: updatedBookmarks });
+
+    if (
+      this.mainController &&
+      typeof this.mainController.refreshUI === "function"
+    ) {
+      this.mainController.refreshUI();
+    }
+
+    NotificationService.show({
+      type: "info",
+      message: !targetBookmark.pinned ? "Bookmark pinned" : "Bookmark unpinned",
+      icon: !targetBookmark.pinned ? "ti-pinned-filled" : "ti-pin",
+      duration: 5000,
+    });
+  },
+
+  handleToggleCheatSheetPin(sheetId) {
+    const cheatsheets = StateManager.getCheatSheets() || [];
+    const targetSheet = cheatsheets.find(
+      (s) => String(s.id) === String(sheetId),
+    );
+    if (!targetSheet) return;
+
+    const updatedCheatSheets = MindService.toggleCheatSheetPin(
+      cheatsheets,
+      sheetId,
+    );
+    StateManager.save({ cheatsheets: updatedCheatSheets });
+
+    if (
+      this.mainController &&
+      typeof this.mainController.refreshUI === "function"
+    ) {
+      this.mainController.refreshUI();
+    }
+
+    NotificationService.show({
+      type: "info",
+      message: !targetSheet.pinned
+        ? "CheatSheet pinned"
+        : "CheatSheet unpinned",
+      icon: !targetSheet.pinned ? "ti-pinned-filled" : "ti-pin",
+      duration: 5000,
     });
   },
 
@@ -104,7 +157,7 @@ export const MindActionController = {
       type: "info",
       message: "Item deleted successfully",
       icon: "ti-trash",
-      duration: 3000,
+      duration: 5000,
     });
   },
 
@@ -116,24 +169,42 @@ export const MindActionController = {
       const target = e.target;
 
       // 1. PIN NOTE
-      const pinBtn = target.closest(".pin-note-btn");
-      if (pinBtn) {
+      const pinNoteBtn = target.closest(".pin-note-btn");
+      if (pinNoteBtn) {
         e.stopPropagation();
-        const id = pinBtn.dataset.id;
+        const id = pinNoteBtn.dataset.id;
         if (id) this.handleToggleNotePin(id);
         return;
       }
 
-      // 2. FAVORITE SNIPPET
-      const favoriteBtn = target.closest(".favorite-snippet-btn");
-      if (favoriteBtn) {
+      // 2. PIN SNIPPET
+      const pinSnippetBtn = target.closest(".pin-snippet-btn");
+      if (pinSnippetBtn) {
         e.stopPropagation();
-        const id = favoriteBtn.dataset.id;
-        if (id) this.handleToggleSnippetFavorite(id);
+        const id = pinSnippetBtn.dataset.id;
+        if (id) this.handleToggleSnippetPin(id);
         return;
       }
 
-      // 3. EDIT MODAL TRIGGER
+      // 3. PIN BOOKMARK
+      const pinBookmarkBtn = target.closest(".pin-bookmark-btn");
+      if (pinBookmarkBtn) {
+        e.stopPropagation();
+        const id = pinBookmarkBtn.dataset.id;
+        if (id) this.handleToggleBookmarkPin(id);
+        return;
+      }
+
+      // 4. PIN CHEATSHEET
+      const pinCheatSheetBtn = target.closest(".pin-cheatsheet-btn");
+      if (pinCheatSheetBtn) {
+        e.stopPropagation();
+        const id = pinCheatSheetBtn.dataset.id;
+        if (id) this.handleToggleCheatSheetPin(id);
+        return;
+      }
+
+      // 5. EDIT MODAL TRIGGER
       const editBtn = target.closest(".edit-btn");
       if (editBtn) {
         e.stopPropagation();
@@ -150,7 +221,7 @@ export const MindActionController = {
         return;
       }
 
-      // 4. DELETE MODAL TRIGGER
+      // 6. DELETE MODAL TRIGGER
       const deleteBtn = target.closest(".delete-btn");
       if (deleteBtn) {
         e.stopPropagation();
@@ -167,7 +238,7 @@ export const MindActionController = {
         return;
       }
 
-      // 5. DIRECT DELETE ITEM HANDLER
+      // 7. DIRECT DELETE ITEM HANDLER
       const directDeleteBtn = target.closest(".direct-delete-btn");
       if (directDeleteBtn) {
         e.stopPropagation();

@@ -76,7 +76,8 @@ export const MindView = {
               <kbd class="flex items-center pointer-events-none">
                 <span
                   class="px-1.25 py-1 text-[10px] bg-surface-2 border border-border text-muted rounded-md shadow-2xs flex flex-row justify-center items-center"
-                ><i class="ti ti-slash"></i></span>
+                  ><i class="ti ti-slash"></i
+                ></span>
               </kbd>
             </div>
           </div>
@@ -98,7 +99,8 @@ export const MindView = {
                 <span
                   id="form-toggle-title"
                   class="text-sm font-medium"
-                >Create New Note</span>
+                  >Create New Note</span
+                >
               </div>
               <div
                 id="form-chevron"
@@ -142,7 +144,8 @@ export const MindView = {
                   <label
                     for="create-note-content"
                     class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                  >Content</label>
+                    >Content</label
+                  >
                   <textarea
                     id="create-note-content"
                     rows="3"
@@ -151,13 +154,31 @@ export const MindView = {
                   ></textarea>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                  <div id="create-note-category-autocomplete" class="w-full"></div>
-                  <div class="flex items-center gap-2 pt-2 sm:pt-6">
-                    <label class="relative inline-flex items-center cursor-pointer gap-2.5 select-none">
-                      <input id="create-note-pinned" type="checkbox" class="sr-only peer" />
-                      <div class="w-10 h-5.5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-brand"></div>
-                      <span class="text-xs font-semibold text-secondary whitespace-nowrap">Pin Note</span>
+                <div class="flex flex-col sm:flex-row items-end gap-4 w-full">
+                  <div
+                    id="create-note-category-autocomplete"
+                    class="flex-1 w-full min-w-0"
+                  ></div>
+                  <div
+                    id="create-note-tags-combobox"
+                    class="flex-1 w-full min-w-0"
+                  ></div>
+                  <div class="shrink-0 pb-1">
+                    <label
+                      class="relative inline-flex items-center cursor-pointer gap-2.5 select-none"
+                    >
+                      <input
+                        id="create-note-pinned"
+                        type="checkbox"
+                        class="sr-only peer"
+                      />
+                      <div
+                        class="w-10 h-5.5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-brand"
+                      ></div>
+                      <span
+                        class="text-xs font-semibold text-secondary whitespace-nowrap"
+                        >Pin Note</span
+                      >
                     </label>
                   </div>
                 </div>
@@ -172,7 +193,8 @@ export const MindView = {
                   <label
                     for="create-snippet-desc"
                     class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                  >Description</label>
+                    >Description</label
+                  >
                   <input
                     id="create-snippet-desc"
                     type="text"
@@ -185,7 +207,8 @@ export const MindView = {
                   <label
                     for="create-snippet-code"
                     class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                  >Code <span class="text-red-700">*</span></label>
+                    >Code <span class="text-red-700">*</span></label
+                  >
                   <textarea
                     id="create-snippet-code"
                     rows="4"
@@ -194,13 +217,31 @@ export const MindView = {
                   ></textarea>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                  <div id="create-snippet-category-autocomplete" class="w-full"></div>
-                  <div class="flex items-center gap-2 pt-2 sm:pt-6">
-                    <label class="relative inline-flex items-center cursor-pointer gap-2.5 select-none">
-                      <input id="create-snippet-favorite" type="checkbox" class="sr-only peer" />
-                      <div class="w-10 h-5.5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-brand"></div>
-                      <span class="text-xs font-semibold text-secondary whitespace-nowrap">Mark as Favorite</span>
+                <div class="flex flex-col sm:flex-row items-end gap-4 w-full">
+                  <div
+                    id="create-snippet-category-autocomplete"
+                    class="flex-1 w-full min-w-0"
+                  ></div>
+                  <div
+                    id="create-snippet-tags-combobox"
+                    class="flex-1 w-full min-w-0"
+                  ></div>
+                  <div class="shrink-0 pb-1">
+                    <label
+                      class="relative inline-flex items-center cursor-pointer gap-2.5 select-none"
+                    >
+                      <input
+                        id="create-snippet-pinned"
+                        type="checkbox"
+                        class="sr-only peer"
+                      />
+                      <div
+                        class="w-10 h-5.5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-brand"
+                      ></div>
+                      <span
+                        class="text-xs font-semibold text-secondary whitespace-nowrap"
+                        >Pin Snippet</span
+                      >
                     </label>
                   </div>
                 </div>
@@ -216,7 +257,8 @@ export const MindView = {
                     <label
                       for="create-bookmark-url"
                       class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                    >URL <span class="text-red-700">*</span></label>
+                      >URL <span class="text-red-700">*</span></label
+                    >
                     <input
                       id="create-bookmark-url"
                       type="url"
@@ -224,20 +266,49 @@ export const MindView = {
                       class="h-11 w-full rounded-xl border border-border bg-surface-2 px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
                     />
                   </div>
-                  <div id="create-bookmark-category-autocomplete" class="w-full"></div>
+                  <div
+                    id="create-bookmark-category-autocomplete"
+                    class="w-full"
+                  ></div>
                 </div>
 
                 <div class="flex flex-col">
                   <label
                     for="create-bookmark-desc"
                     class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                  >Description</label>
+                    >Description</label
+                  >
                   <textarea
                     id="create-bookmark-desc"
                     rows="2"
                     placeholder="Short description or notes about this link..."
                     class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
                   ></textarea>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-end gap-4 w-full">
+                  <div
+                    id="create-bookmark-tags-combobox"
+                    class="flex-1 w-full min-w-0"
+                  ></div>
+                  <div class="shrink-0 pb-1">
+                    <label
+                      class="relative inline-flex items-center cursor-pointer gap-2.5 select-none"
+                    >
+                      <input
+                        id="create-bookmark-pinned"
+                        type="checkbox"
+                        class="sr-only peer"
+                      />
+                      <div
+                        class="w-10 h-5.5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-brand"
+                      ></div>
+                      <span
+                        class="text-xs font-semibold text-secondary whitespace-nowrap"
+                        >Pin Bookmark</span
+                      >
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -251,7 +322,8 @@ export const MindView = {
                     <label
                       for="create-cheatsheet-desc"
                       class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                    >Description</label>
+                      >Description</label
+                    >
                     <input
                       id="create-cheatsheet-desc"
                       type="text"
@@ -259,7 +331,35 @@ export const MindView = {
                       class="h-11 w-full rounded-xl border border-border bg-surface-2 px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
                     />
                   </div>
-                  <div id="create-cheatsheet-category-autocomplete" class="w-full"></div>
+                  <div
+                    id="create-cheatsheet-category-autocomplete"
+                    class="w-full"
+                  ></div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-end gap-4 w-full">
+                  <div
+                    id="create-cheatsheet-tags-combobox"
+                    class="flex-1 w-full min-w-0"
+                  ></div>
+                  <div class="shrink-0 pb-1">
+                    <label
+                      class="relative inline-flex items-center cursor-pointer gap-2.5 select-none"
+                    >
+                      <input
+                        id="create-cheatsheet-pinned"
+                        type="checkbox"
+                        class="sr-only peer"
+                      />
+                      <div
+                        class="w-10 h-5.5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-brand"
+                      ></div>
+                      <span
+                        class="text-xs font-semibold text-secondary whitespace-nowrap"
+                        >Pin CheatSheet</span
+                      >
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -267,8 +367,11 @@ export const MindView = {
                 class="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <p class="flex items-center gap-1.5 text-xs text-secondary">
-                  <i class="ti ti-info-square-rounded text-brand/80 text-base"></i>
-                  Manage your knowledge, code snippets, and resources effectively.
+                  <i
+                    class="ti ti-info-square-rounded text-brand/80 text-base"
+                  ></i>
+                  Manage your knowledge, code snippets, and resources
+                  effectively.
                 </p>
                 <button
                   id="add-plan-btn"
@@ -321,12 +424,18 @@ export const MindView = {
             class="flex flex-wrap sm:flex-nowrap items-center justify-between sm:justify-end gap-3"
           >
             <div class="w-full flex flex-col xs:flex-row items-center gap-3">
-              <div class="w-full flex items-center gap-2 min-35">
-                <div id="filter-autocomplete-wrapper" class="w-full"></div>
+              <div class="w-full flex items-center gap-2 min-w-35">
+                <div
+                  id="filter-autocomplete-wrapper"
+                  class="w-full"
+                ></div>
               </div>
 
               <div class="w-full flex items-center gap-2 min-w-35">
-                <div id="sort-autocomplete-wrapper" class="w-full"></div>
+                <div
+                  id="sort-autocomplete-wrapper"
+                  class="w-full"
+                ></div>
               </div>
             </div>
 

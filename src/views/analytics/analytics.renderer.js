@@ -14,8 +14,16 @@ let activeHeatmapTab = "weekly";
 
 const weekdayNames = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
 
-function getHeatmapOptions(notes, snippets, bookmarks, cheatsheets, view) {
+function getHeatmapOptions(
+  tags,
+  notes,
+  snippets,
+  bookmarks,
+  cheatsheets,
+  view,
+) {
   const heatmapSeries = AnalyticsAdapter.generateHeatmapSeries(
+    tags,
     notes,
     snippets,
     bookmarks,
@@ -94,6 +102,7 @@ function getHeatmapOptions(notes, snippets, bookmarks, cheatsheets, view) {
 }
 
 export function updateHeatmapChart(
+  tags,
   notes,
   snippets,
   bookmarks,
@@ -102,6 +111,7 @@ export function updateHeatmapChart(
 ) {
   if (!heatmapChartInstance) return;
   const newOptions = getHeatmapOptions(
+    tags,
     notes,
     snippets,
     bookmarks,
@@ -159,7 +169,7 @@ function syncMobileMenuSelection(view) {
   });
 }
 
-function bindAnalyticsControls(notes, snippets, bookmarks, cheatsheets) {
+function bindAnalyticsControls(tags, notes, snippets, bookmarks, cheatsheets) {
   const switcher = document.getElementById("chart-view-switcher");
   if (switcher) {
     switcher.querySelectorAll("[data-view]").forEach((btn) => {
@@ -168,7 +178,14 @@ function bindAnalyticsControls(notes, snippets, bookmarks, cheatsheets) {
         const view = e.currentTarget.dataset.view;
         if (view && view !== activeHeatmapTab) {
           updateTabStyles(view);
-          updateHeatmapChart(notes, snippets, bookmarks, cheatsheets, view);
+          updateHeatmapChart(
+            tags,
+            notes,
+            snippets,
+            bookmarks,
+            cheatsheets,
+            view,
+          );
         }
       });
     });
@@ -197,7 +214,14 @@ function bindAnalyticsControls(notes, snippets, bookmarks, cheatsheets) {
         const view = event.currentTarget.dataset.view;
         if (view && view !== activeHeatmapTab) {
           updateTabStyles(view);
-          updateHeatmapChart(notes, snippets, bookmarks, cheatsheets, view);
+          updateHeatmapChart(
+            tags,
+            notes,
+            snippets,
+            bookmarks,
+            cheatsheets,
+            view,
+          );
         }
         mobileMenu.classList.add("hidden");
       });
@@ -294,6 +318,7 @@ function destroyChartInstances() {
 }
 
 export function renderAnalyticsCharts(
+  tags = [],
   notes = [],
   snippets = [],
   bookmarks = [],
@@ -306,6 +331,7 @@ export function renderAnalyticsCharts(
   destroyChartInstances();
 
   dashboard.innerHTML = DashboardComponent.render(
+    tags,
     notes,
     snippets,
     bookmarks,
@@ -313,6 +339,7 @@ export function renderAnalyticsCharts(
   );
 
   const hasData =
+    (Array.isArray(tags) && tags.length > 0) ||
     (Array.isArray(notes) && notes.length > 0) ||
     (Array.isArray(snippets) && snippets.length > 0) ||
     (Array.isArray(bookmarks) && bookmarks.length > 0) ||
@@ -338,7 +365,7 @@ export function renderAnalyticsCharts(
   }
 
   AnalyticsController.init();
-  bindAnalyticsControls(notes, snippets, bookmarks, cheatsheets);
+  bindAnalyticsControls(tags, notes, snippets, bookmarks, cheatsheets);
 
   if (!hasData) {
     const HeatmapSwitcher = document.getElementById("chart-view-switcher");
@@ -370,6 +397,7 @@ export function renderAnalyticsCharts(
 
   // 1. Heatmap Options
   const heatmapOptions = getHeatmapOptions(
+    tags,
     notes,
     snippets,
     bookmarks,
@@ -379,6 +407,7 @@ export function renderAnalyticsCharts(
 
   // 2. Weekday Bar Chart Options
   const weekdayCounts = AnalyticsAdapter.generateWeekdayCounts(
+    tags,
     notes,
     snippets,
     bookmarks,
@@ -438,6 +467,7 @@ export function renderAnalyticsCharts(
 
   // 3. Module Distribution (Polar Area Chart)
   const moduleData = AnalyticsAdapter.generateModuleAnalytics(
+    tags,
     notes,
     snippets,
     bookmarks,
@@ -484,6 +514,7 @@ export function renderAnalyticsCharts(
 
   // 4. Top Tags Analytics (Bar Chart)
   const tagsData = AnalyticsAdapter.generateTagsAnalytics(
+    tags,
     notes,
     snippets,
     bookmarks,
@@ -545,6 +576,7 @@ export function renderAnalyticsCharts(
 
   // 5. Storage / Metrics Analytics (Bar Chart)
   const metricsData = AnalyticsAdapter.generateMetricsAnalytics(
+    tags,
     notes,
     snippets,
     bookmarks,

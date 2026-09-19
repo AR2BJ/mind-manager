@@ -68,6 +68,7 @@ export const SettingsImportController = {
       setTimeout(() => {
         try {
           const rawContent = event.target.result;
+          let importedTags = [];
           let importedNotes = [];
           let importedSnippets = [];
           let importedBookmarks = [];
@@ -75,18 +76,21 @@ export const SettingsImportController = {
 
           if (format === "json") {
             const parsedJson = JSON.parse(rawContent);
+            importedTags = parsedJson.tags || [];
             importedNotes = parsedJson.notes || [];
             importedSnippets = parsedJson.snippets || [];
             importedBookmarks = parsedJson.bookmarks || [];
             importedCheatsheets = parsedJson.cheatsheets || [];
           } else if (format === "markdown") {
             const parsedMd = this.parseMarkdownToData(rawContent);
+            importedTags = parsedMd.tags;
             importedNotes = parsedMd.notes;
             importedSnippets = parsedMd.snippets;
             importedBookmarks = parsedMd.bookmarks;
             importedCheatsheets = parsedMd.cheatsheets;
           } else if (format === "csv") {
             const parsedCsv = this.parseCsvToData(rawContent);
+            importedTags = parsedCsv.tags;
             importedNotes = parsedCsv.notes;
             importedSnippets = parsedCsv.snippets;
             importedBookmarks = parsedCsv.bookmarks;
@@ -94,6 +98,7 @@ export const SettingsImportController = {
           }
 
           if (
+            importedTags.length === 0 &&
             importedNotes.length === 0 &&
             importedSnippets.length === 0 &&
             importedBookmarks.length === 0 &&
@@ -103,6 +108,7 @@ export const SettingsImportController = {
           }
 
           StateManager.save({
+            tags: importedTags,
             notes: importedNotes,
             snippets: importedSnippets,
             bookmarks: importedBookmarks,
@@ -140,10 +146,36 @@ export const SettingsImportController = {
   },
 
   parseMarkdownToData(mdContent) {
+    const tags = [];
     const notes = [];
     const snippets = [];
     const bookmarks = [];
     const cheatsheets = [];
+
+    // 0. TAGS
+    const tagsSection = mdContent
+      .split(/## 🏷️ TAG REGISTRY/)[1]
+      ?.split(/## 📝 NOTES REGISTRY/)[0];
+
+    if (tagsSection) {
+      const tagLines = tagsSection.match(
+        /- Tag:\s*(.+?)\s*\(ID:\s*(.+?)\)\s*\*\*Entity Type:\*\*\s*(.+)/g,
+      );
+      if (tagLines) {
+        tagLines.forEach((line) => {
+          const match = line.match(
+            /- Tag:\s*(.+?)\s*\(ID:\s*(.+?)\)\s*\*\*Entity Type:\*\*\s*(.+)/,
+          );
+          if (match) {
+            tags.push({
+              id: match[2].trim(),
+              name: match[1].trim(),
+              entityType: match[3].trim(),
+            });
+          }
+        });
+      }
+    }
 
     // 1. NOTES
     const notesSection = mdContent
@@ -165,7 +197,7 @@ export const SettingsImportController = {
             title: titleIdMatch[1].trim(),
             category: catMatch ? catMatch[1].trim() : "general",
             pinned: pinnedMatch ? pinnedMatch[1].trim() === "Yes" : false,
-            tags:
+            tagIds:
               tagsMatch && tagsMatch[1] !== "None"
                 ? tagsMatch[1].split(",").map((t) => t.trim())
                 : [],
@@ -185,7 +217,7 @@ export const SettingsImportController = {
       blocks.forEach((block) => {
         const titleIdMatch = block.match(/(.+)\s*\(ID:\s*(.+)\)/);
         const langMatch = block.match(/- \*\*Category:\*\*\s*(.+)/);
-        const favMatch = block.match(/- \*\*Favorite:\*\*\s*(.+)/);
+        const pinnedMatch = block.match(/- \*\*Pinned:\*\*\s*(.+)/);
         const descMatch = block.match(/- \*\*Description:\*\*\s*(.+)/);
         const tagsMatch = block.match(/- \*\*Tags:\*\*\s*(.+)/);
         const codeMatch = block.match(/```[\w]*\n([\s\S]*?)\n```/);
@@ -195,10 +227,10 @@ export const SettingsImportController = {
             id: titleIdMatch[2].trim(),
             title: titleIdMatch[1].trim(),
             category: langMatch ? langMatch[1].trim() : "text",
-            isFavorite: favMatch ? favMatch[1].includes("Yes") : false,
+            pinned: pinnedMatch ? pinnedMatch[1].trim() === "Yes" : false,
             description:
               descMatch && descMatch[1] !== "N/A" ? descMatch[1].trim() : "",
-            tags:
+            tagIds:
               tagsMatch && tagsMatch[1] !== "None"
                 ? tagsMatch[1].split(",").map((t) => t.trim())
                 : [],
@@ -218,8 +250,9 @@ export const SettingsImportController = {
       blocks.forEach((block) => {
         const titleIdMatch = block.match(/(.+)\s*\(ID:\s*(.+)\)/);
         const urlMatch = block.match(/- \*\*URL:\*\*\s*(.+)/);
+        const domainMatch = block.match(/- \*\*Domain:\*\*\s*(.+)/);
         const catMatch = block.match(/- \*\*Category:\*\*\s*(.+)/);
-        const favIconMatch = block.match(/- \*\*Favicon:\*\*\s*(.+)/);
+        const pinnedMatch = block.match(/- \*\*Pinned:\*\*\s*(.+)/);
         const descMatch = block.match(/- \*\*Description:\*\*\s*(.+)/);
         const tagsMatch = block.match(/- \*\*Tags:\*\*\s*(.+)/);
 
@@ -228,14 +261,15 @@ export const SettingsImportController = {
             id: titleIdMatch[2].trim(),
             title: titleIdMatch[1].trim(),
             url: urlMatch && urlMatch[1] !== "N/A" ? urlMatch[1].trim() : "",
-            category: catMatch ? catMatch[1].trim() : "uncategorized",
-            favicon:
-              favIconMatch && favIconMatch[1] !== "N/A"
-                ? favIconMatch[1].trim()
+            domain:
+              domainMatch && domainMatch[1] !== "N/A"
+                ? domainMatch[1].trim()
                 : "",
+            category: catMatch ? catMatch[1].trim() : "general",
+            pinned: pinnedMatch ? pinnedMatch[1].trim() === "Yes" : false,
             description:
               descMatch && descMatch[1] !== "N/A" ? descMatch[1].trim() : "",
-            tags:
+            tagIds:
               tagsMatch && tagsMatch[1] !== "None"
                 ? tagsMatch[1].split(",").map((t) => t.trim())
                 : [],
@@ -252,18 +286,21 @@ export const SettingsImportController = {
       blocks.forEach((block) => {
         const titleIdMatch = block.match(/(.+)\s*\(ID:\s*(.+)\)/);
         const catMatch = block.match(/- \*\*Category:\*\*\s*(.+)/);
+        const pinnedMatch = block.match(/- \*\*Pinned:\*\*\s*(.+)/);
         const descMatch = block.match(/- \*\*Description:\*\*\s*(.+)/);
         const tagsMatch = block.match(/- \*\*Tags:\*\*\s*(.+)/);
 
         const items = [];
-        const itemLines = block.match(/- \*\*(.+?)\*\*: (.*) \(ID: (.+)\)/g);
+        const itemLines = block.match(/- \*\*(.+?)\*\*: (.*?) \(ID: (.+)\)/g);
         if (itemLines) {
           itemLines.forEach((line) => {
-            const m = line.match(/- \*\*(.+?)\*\*: (.*) \(ID: (.+)\)/);
+            const m = line.match(/- \*\*(.+?)\*\*: (.*?) \(ID: (.+)\)/);
             if (m) {
+              const valAndDesc = m[2].trim().split(" | ");
               items.push({
                 key: m[1].trim(),
-                value: m[2].trim(),
+                value: valAndDesc[0] || "",
+                description: valAndDesc[1] || "",
                 id: m[3].trim(),
               });
             }
@@ -275,9 +312,10 @@ export const SettingsImportController = {
             id: titleIdMatch[2].trim(),
             title: titleIdMatch[1].trim(),
             category: catMatch ? catMatch[1].trim() : "general",
+            pinned: pinnedMatch ? pinnedMatch[1].trim() === "Yes" : false,
             description:
               descMatch && descMatch[1] !== "N/A" ? descMatch[1].trim() : "",
-            tags:
+            tagIds:
               tagsMatch && tagsMatch[1] !== "None"
                 ? tagsMatch[1].split(",").map((t) => t.trim())
                 : [],
@@ -287,10 +325,11 @@ export const SettingsImportController = {
       });
     }
 
-    return { notes, snippets, bookmarks, cheatsheets };
+    return { tags, notes, snippets, bookmarks, cheatsheets };
   },
 
   parseCsvToData(csvContent) {
+    const tags = [];
     const notes = [];
     const snippets = [];
     const bookmarks = [];
@@ -322,13 +361,16 @@ export const SettingsImportController = {
     };
 
     const lines = csvContent.split(/\r?\n/);
-    let currentSection = "NOTES";
+    let currentSection = "";
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line || line.startsWith("#")) continue;
 
-      if (line === "[NOTES]") {
+      if (line === "[TAGS]") {
+        currentSection = "TAGS";
+        continue;
+      } else if (line === "[NOTES]") {
         currentSection = "NOTES";
         continue;
       } else if (line === "[SNIPPETS]") {
@@ -352,7 +394,16 @@ export const SettingsImportController = {
         }
       };
 
-      if (currentSection === "NOTES") {
+      if (currentSection === "TAGS") {
+        if (cols[0] === "Id" && cols[1] === "Name") continue;
+        if (cols.length >= 2 && cols[0] && cols[1]) {
+          tags.push({
+            id: cols[0].trim(),
+            name: cols[1].trim(),
+            entityType: cols[2] ? cols[2].trim() : "notes",
+          });
+        }
+      } else if (currentSection === "NOTES") {
         if (cols[0] === "Id" && cols[1] === "Title") continue;
         if (cols.length >= 2 && cols[0]) {
           notes.push({
@@ -360,7 +411,7 @@ export const SettingsImportController = {
             title: cols[1],
             content: cols[2] || "",
             category: cols[3] || "general",
-            tags: parseJsonSafe(cols[4], []),
+            tagIds: parseJsonSafe(cols[4], []),
             pinned: cols[5] === "Yes",
             createdAt: cols[6],
             updatedAt: cols[7],
@@ -374,9 +425,9 @@ export const SettingsImportController = {
             title: cols[1],
             description: cols[2] || "",
             code: cols[3] || "",
-            category: cols[4] || "text",
-            tags: parseJsonSafe(cols[5], []),
-            isFavorite: cols[6] === "Yes",
+            category: cols[4] || "general",
+            tagIds: parseJsonSafe(cols[5], []),
+            pinned: cols[6] === "Yes",
             createdAt: cols[7],
             updatedAt: cols[8],
           });
@@ -388,12 +439,13 @@ export const SettingsImportController = {
             id: cols[0],
             title: cols[1],
             url: cols[2] || "",
-            description: cols[3] || "",
-            category: cols[4] || "uncategorized",
-            tags: parseJsonSafe(cols[5], []),
-            favicon: cols[6] || "",
-            createdAt: cols[7],
-            updatedAt: cols[8],
+            domain: cols[3] || "",
+            description: cols[4] || "",
+            category: cols[5] || "general",
+            tagIds: parseJsonSafe(cols[6], []),
+            pinned: cols[7] === "Yes",
+            createdAt: cols[8],
+            updatedAt: cols[9],
           });
         }
       } else if (currentSection === "CHEATSHEETS") {
@@ -405,14 +457,15 @@ export const SettingsImportController = {
             description: cols[2] || "",
             category: cols[3] || "general",
             items: parseJsonSafe(cols[4], []),
-            tags: parseJsonSafe(cols[5], []),
-            createdAt: cols[6],
-            updatedAt: cols[7],
+            tagIds: parseJsonSafe(cols[5], []),
+            pinned: cols[6] === "Yes",
+            createdAt: cols[7],
+            updatedAt: cols[8],
           });
         }
       }
     }
 
-    return { notes, snippets, bookmarks, cheatsheets };
+    return { tags, notes, snippets, bookmarks, cheatsheets };
   },
 };

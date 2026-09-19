@@ -1,4 +1,23 @@
-import { generateId, todayISO } from "@/utils/helpers.js";
+import {
+  normalizeBookmark,
+  normalizeCheatSheet,
+  normalizeNote,
+  normalizeSnippet,
+} from "@/models/storage.model";
+
+import { todayISO } from "@/utils/helpers.js";
+
+function sanitizeTagIds(tags) {
+  if (!Array.isArray(tags)) return [];
+  return tags
+    .map((tag) => {
+      if (typeof tag === "object" && tag !== null) {
+        return String(tag.id || tag.value || "");
+      }
+      return String(tag || "").trim();
+    })
+    .filter(Boolean);
+}
 
 export const MindService = {
   // ==========================================
@@ -12,18 +31,24 @@ export const MindService = {
       throw new Error("Note title must be between 2 and 120 characters");
     }
 
-    const newNote = {
-      id: String(noteData.id || generateId()),
+    const alreadyExists = currentNotes.some(
+      (note) => note.title.toLowerCase() === cleanedTitle.toLowerCase(),
+    );
+    if (alreadyExists) {
+      throw new Error("An active note with this title already exists");
+    }
+
+    const parsedTagIds = sanitizeTagIds(noteData.tagIds);
+
+    const payload = normalizeNote({
+      ...noteData,
       title: cleanedTitle,
-      content: (noteData.content || "").trim(),
-      category: String(noteData.category || "general"),
-      tags: Array.isArray(noteData.tags) ? noteData.tags : [],
-      pinned: Boolean(noteData.pinned),
+      tagIds: parsedTagIds,
       createdAt: todayISO(),
       updatedAt: todayISO(),
-    };
+    });
 
-    return [newNote, ...currentNotes];
+    return [payload, ...currentNotes];
   },
 
   editNote(currentNotes = [], noteId, updatedFields = {}) {
@@ -41,13 +66,12 @@ export const MindService = {
     return currentNotes.map((n) => {
       if (String(n.id) !== String(noteId)) return n;
 
-      return {
+      return normalizeNote({
         ...n,
         ...updatedFields,
         title: cleanedTitle,
-        tags: Array.isArray(updatedFields.tags) ? updatedFields.tags : n.tags,
         updatedAt: todayISO(),
-      };
+      });
     });
   },
 
@@ -78,19 +102,29 @@ export const MindService = {
       throw new Error("Snippet title must be between 2 and 120 characters");
     }
 
-    const newSnippet = {
-      id: String(snippetData.id || generateId()),
+    const code = (snippetData.code || "").trim();
+    if (!code) {
+      throw new Error("Code is required for snippet");
+    }
+
+    const alreadyExists = currentSnippets.some(
+      (snippet) => snippet.title.toLowerCase() === cleanedTitle.toLowerCase(),
+    );
+    if (alreadyExists) {
+      throw new Error("An active snippet with this title already exists");
+    }
+
+    const parsedTagIds = sanitizeTagIds(snippetData.tagIds);
+
+    const payload = normalizeSnippet({
+      ...snippetData,
       title: cleanedTitle,
-      description: (snippetData.description || "").trim(),
-      code: (snippetData.code || "").trim(),
-      category: String(snippetData.category || "javascript"),
-      tags: Array.isArray(snippetData.tags) ? snippetData.tags : [],
-      isFavorite: Boolean(snippetData.isFavorite),
+      tagIds: parsedTagIds,
       createdAt: todayISO(),
       updatedAt: todayISO(),
-    };
+    });
 
-    return [newSnippet, ...currentSnippets];
+    return [payload, ...currentSnippets];
   },
 
   editSnippet(currentSnippets = [], snippetId, updatedFields = {}) {
@@ -110,22 +144,21 @@ export const MindService = {
     return currentSnippets.map((s) => {
       if (String(s.id) !== String(snippetId)) return s;
 
-      return {
+      return normalizeSnippet({
         ...s,
         ...updatedFields,
         title: cleanedTitle,
-        tags: Array.isArray(updatedFields.tags) ? updatedFields.tags : s.tags,
         updatedAt: todayISO(),
-      };
+      });
     });
   },
 
-  toggleSnippetFavorite(currentSnippets = [], snippetId) {
+  toggleSnippetPin(currentSnippets = [], snippetId) {
     return currentSnippets.map((s) => {
       if (String(s.id) !== String(snippetId)) return s;
       return {
         ...s,
-        isFavorite: !s.isFavorite,
+        pinned: !s.pinned,
         updatedAt: todayISO(),
       };
     });
@@ -147,24 +180,30 @@ export const MindService = {
       throw new Error("Bookmark title must be between 2 and 120 characters");
     }
 
+    const alreadyExists = currentBookmarks.some(
+      (bookmark) => bookmark.title.toLowerCase() === cleanedTitle.toLowerCase(),
+    );
+    if (alreadyExists) {
+      throw new Error("An active bookmark with this title already exists");
+    }
+
     const rawUrl = (bookmarkData.url || "").trim();
     if (!rawUrl) {
       throw new Error("URL is required for bookmark");
     }
 
-    const newBookmark = {
-      id: String(bookmarkData.id || generateId()),
+    const parsedTagIds = sanitizeTagIds(bookmarkData.tagIds);
+
+    const payload = normalizeBookmark({
+      ...bookmarkData,
       title: cleanedTitle,
       url: rawUrl,
-      description: (bookmarkData.description || "").trim(),
-      category: String(bookmarkData.category || "uncategorized"),
-      tags: Array.isArray(bookmarkData.tags) ? bookmarkData.tags : [],
-      favicon: (bookmarkData.favicon || "").trim(),
+      tagIds: parsedTagIds,
       createdAt: todayISO(),
       updatedAt: todayISO(),
-    };
+    });
 
-    return [newBookmark, ...currentBookmarks];
+    return [payload, ...currentBookmarks];
   },
 
   editBookmark(currentBookmarks = [], bookmarkId, updatedFields = {}) {
@@ -184,11 +223,21 @@ export const MindService = {
     return currentBookmarks.map((b) => {
       if (String(b.id) !== String(bookmarkId)) return b;
 
-      return {
+      return normalizeBookmark({
         ...b,
         ...updatedFields,
         title: cleanedTitle,
-        tags: Array.isArray(updatedFields.tags) ? updatedFields.tags : b.tags,
+        updatedAt: todayISO(),
+      });
+    });
+  },
+
+  toggleBookmarkPin(currentBookmarks = [], bookmarkId) {
+    return currentBookmarks.map((b) => {
+      if (String(b.id) !== String(bookmarkId)) return b;
+      return {
+        ...b,
+        pinned: !b.pinned,
         updatedAt: todayISO(),
       };
     });
@@ -201,33 +250,36 @@ export const MindService = {
   // ==========================================
   // 4. CHEATSHEETS
   // ==========================================
-  createCheatSheet(currentCheatSheets = [], sheetData = {}) {
+  createCheatSheet(currentCheatSheets = [], cheatSheetData = {}) {
     const rawTitle =
-      typeof sheetData === "string" ? sheetData : sheetData.title;
+      typeof cheatSheetData === "string"
+        ? cheatSheetData
+        : cheatSheetData.title;
     const cleanedTitle = (rawTitle || "").trim().replace(/\s+/g, " ");
 
     if (!cleanedTitle || cleanedTitle.length < 2 || cleanedTitle.length > 120) {
       throw new Error("CheatSheet title must be between 2 and 120 characters");
     }
 
-    const newSheet = {
-      id: String(sheetData.id || generateId()),
+    const alreadyExists = currentCheatSheets.some(
+      (cheatsheet) =>
+        cheatsheet.title.toLowerCase() === cleanedTitle.toLowerCase(),
+    );
+    if (alreadyExists) {
+      throw new Error("An active cheatsheet with this title already exists");
+    }
+
+    const parsedTagIds = sanitizeTagIds(cheatSheetData.tagIds);
+
+    const payload = normalizeCheatSheet({
+      ...cheatSheetData,
       title: cleanedTitle,
-      description: (sheetData.description || "").trim(),
-      category: String(sheetData.category || "general"),
-      items: Array.isArray(sheetData.items)
-        ? sheetData.items.map((item) => ({
-            id: String(item.id || generateId()),
-            key: (item.key || "").trim(),
-            value: (item.value || "").trim(),
-          }))
-        : [],
-      tags: Array.isArray(sheetData.tags) ? sheetData.tags : [],
+      tagIds: parsedTagIds,
       createdAt: todayISO(),
       updatedAt: todayISO(),
-    };
+    });
 
-    return [newSheet, ...currentCheatSheets];
+    return [payload, ...currentCheatSheets];
   },
 
   editCheatSheet(currentCheatSheets = [], sheetId, updatedFields = {}) {
@@ -249,18 +301,21 @@ export const MindService = {
     return currentCheatSheets.map((s) => {
       if (String(s.id) !== String(sheetId)) return s;
 
-      return {
+      return normalizeCheatSheet({
         ...s,
         ...updatedFields,
         title: cleanedTitle,
-        items: Array.isArray(updatedFields.items)
-          ? updatedFields.items.map((item) => ({
-              id: String(item.id || generateId()),
-              key: (item.key || "").trim(),
-              value: (item.value || "").trim(),
-            }))
-          : s.items,
-        tags: Array.isArray(updatedFields.tags) ? updatedFields.tags : s.tags,
+        updatedAt: todayISO(),
+      });
+    });
+  },
+
+  toggleCheatSheetPin(currentCheatSheets = [], sheetId) {
+    return currentCheatSheets.map((s) => {
+      if (String(s.id) !== String(sheetId)) return s;
+      return {
+        ...s,
+        pinned: !s.pinned,
         updatedAt: todayISO(),
       };
     });

@@ -373,7 +373,7 @@ export class ComboboxComponent {
             class="combobox-item px-3.5 py-2 text-xs font-medium text-color hover:bg-brand/10 hover:text-brand cursor-pointer flex items-center justify-between transition border-b border-border/30 last:border-none"
           >
             <span class="flex items-center gap-1.5">
-              <i class="${icon} text-sm"></i>
+              <i class="${icon} text-base"></i>
               ${this.getItemText(item)}
             </span>
             <span class="text-[10px] text-muted"

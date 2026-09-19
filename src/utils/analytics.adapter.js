@@ -21,26 +21,41 @@ function getDaysInMonth(year, month) {
 }
 
 function extractAllItems(
+  tags = [],
   notes = [],
   snippets = [],
   bookmarks = [],
   cheatsheets = [],
 ) {
+  const safeTags = Array.isArray(tags) ? tags : [];
   const safeNotes = Array.isArray(notes) ? notes : [];
   const safeSnippets = Array.isArray(snippets) ? snippets : [];
   const safeBookmarks = Array.isArray(bookmarks) ? bookmarks : [];
   const safeCheatsheets = Array.isArray(cheatsheets) ? cheatsheets : [];
-  return [...safeNotes, ...safeSnippets, ...safeBookmarks, ...safeCheatsheets];
+  return [
+    ...safeTags,
+    ...safeNotes,
+    ...safeSnippets,
+    ...safeBookmarks,
+    ...safeCheatsheets,
+  ];
 }
 
 function getActivityMap(
+  tags = [],
   notes = [],
   snippets = [],
   bookmarks = [],
   cheatsheets = [],
 ) {
   const map = {};
-  const allItems = extractAllItems(notes, snippets, bookmarks, cheatsheets);
+  const allItems = extractAllItems(
+    tags,
+    notes,
+    snippets,
+    bookmarks,
+    cheatsheets,
+  );
 
   allItems.forEach((item) => {
     const dateStr = item?.createdAt || item?.updatedAt || item?.date;
@@ -55,6 +70,7 @@ function getActivityMap(
 
 export const AnalyticsAdapter = {
   generateHeatmapSeries(
+    tags = [],
     notes = [],
     snippets = [],
     bookmarks = [],
@@ -62,7 +78,13 @@ export const AnalyticsAdapter = {
     view = "weekly",
   ) {
     let startDate = new Date();
-    const allItems = extractAllItems(notes, snippets, bookmarks, cheatsheets);
+    const allItems = extractAllItems(
+      tags,
+      notes,
+      snippets,
+      bookmarks,
+      cheatsheets,
+    );
 
     if (allItems.length > 0) {
       const validDates = allItems
@@ -86,6 +108,7 @@ export const AnalyticsAdapter = {
     today.setHours(23, 59, 59, 999);
 
     const globalActivityMap = getActivityMap(
+      tags,
       notes,
       snippets,
       bookmarks,
@@ -223,13 +246,20 @@ export const AnalyticsAdapter = {
   },
 
   generateWeekdayCounts(
+    tags = [],
     notes = [],
     snippets = [],
     bookmarks = [],
     cheatsheets = [],
   ) {
     const weekdayCounts = Array(7).fill(0);
-    const allItems = extractAllItems(notes, snippets, bookmarks, cheatsheets);
+    const allItems = extractAllItems(
+      tags,
+      notes,
+      snippets,
+      bookmarks,
+      cheatsheets,
+    );
 
     allItems.forEach((item) => {
       const dateStr = item?.createdAt || item?.updatedAt || item?.date;
@@ -247,19 +277,22 @@ export const AnalyticsAdapter = {
   },
 
   generateModuleAnalytics(
+    tags = [],
     notes = [],
     snippets = [],
     bookmarks = [],
     cheatsheets = [],
   ) {
+    const safeTags = Array.isArray(tags) ? tags : [];
     const safeNotes = Array.isArray(notes) ? notes : [];
     const safeSnippets = Array.isArray(snippets) ? snippets : [];
     const safeBookmarks = Array.isArray(bookmarks) ? bookmarks : [];
     const safeCheatsheets = Array.isArray(cheatsheets) ? cheatsheets : [];
 
     return {
-      labels: ["Notes", "Snippets", "Bookmarks", "CheatSheets"],
+      labels: ["Tags", "Notes", "Snippets", "Bookmarks", "CheatSheets"],
       series: [
+        safeTags.length,
         safeNotes.length,
         safeSnippets.length,
         safeBookmarks.length,
@@ -269,26 +302,42 @@ export const AnalyticsAdapter = {
   },
 
   generateTagsAnalytics(
+    tags = [],
     notes = [],
     snippets = [],
     bookmarks = [],
     cheatsheets = [],
   ) {
-    const allItems = extractAllItems(notes, snippets, bookmarks, cheatsheets);
-    const tagMap = {};
+    const safeTags = Array.isArray(tags) ? tags : [];
 
-    allItems.forEach((item) => {
-      if (Array.isArray(item?.tags)) {
-        item.tags.forEach((tag) => {
-          const cleanedTag = String(tag).trim();
-          if (cleanedTag) {
-            tagMap[cleanedTag] = (tagMap[cleanedTag] || 0) + 1;
+    const tagLookup = new Map();
+    safeTags.forEach((tag) => {
+      if (tag?.id && tag?.name) {
+        tagLookup.set(String(tag.id), String(tag.name).trim());
+      }
+    });
+
+    const contentItems = [
+      ...(Array.isArray(notes) ? notes : []),
+      ...(Array.isArray(snippets) ? snippets : []),
+      ...(Array.isArray(bookmarks) ? bookmarks : []),
+      ...(Array.isArray(cheatsheets) ? cheatsheets : []),
+    ];
+
+    const tagCountMap = {};
+
+    contentItems.forEach((item) => {
+      if (Array.isArray(item?.tagIds)) {
+        item.tagIds.forEach((tagId) => {
+          const tagName = tagLookup.get(String(tagId));
+          if (tagName) {
+            tagCountMap[tagName] = (tagCountMap[tagName] || 0) + 1;
           }
         });
       }
     });
 
-    const sortedTags = Object.entries(tagMap)
+    const sortedTags = Object.entries(tagCountMap)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
 
@@ -307,12 +356,19 @@ export const AnalyticsAdapter = {
   },
 
   generateMetricsAnalytics(
+    tags = [],
     notes = [],
     snippets = [],
     bookmarks = [],
     cheatsheets = [],
   ) {
-    const allItems = extractAllItems(notes, snippets, bookmarks, cheatsheets);
+    const allItems = extractAllItems(
+      tags,
+      notes,
+      snippets,
+      bookmarks,
+      cheatsheets,
+    );
 
     const categories = ["Total Items", "Favorite/Pinned", "Archived"];
     let total = allItems.length;

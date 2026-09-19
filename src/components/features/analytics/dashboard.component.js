@@ -5,70 +5,76 @@ import {
   SNIPPET_CATEGORIES,
 } from "@/utils/constants/options-value.constants";
 
-import { StateManager } from "@/models/state.model.js";
-
 export const DashboardComponent = {
-  render(notes = [], snippets = [], bookmarks = [], cheatsheets = []) {
+  render(
+    tags = [],
+    notes = [],
+    snippets = [],
+    bookmarks = [],
+    cheatsheets = [],
+  ) {
+    const safeTags = Array.isArray(tags) ? tags : [];
     const safeNotes = Array.isArray(notes) ? notes : [];
     const safeSnippets = Array.isArray(snippets) ? snippets : [];
     const safeBookmarks = Array.isArray(bookmarks) ? bookmarks : [];
-    const safeCheatsheets = Array.isArray(cheatsheets) ? cheatsheets : [];
+    const safeCheatSheets = Array.isArray(cheatsheets) ? cheatsheets : [];
 
-    const totalEntities =
+    const pinnedNotes = safeNotes.filter((n) => n.pinned).length;
+    const pinnedSnippets = safeSnippets.filter((s) => s.pinned).length;
+    const pinnedBookmarks = safeBookmarks.filter((b) => b.pinned).length;
+    const pinnedCheatSheets = safeCheatSheets.filter((c) => c.pinned).length;
+
+    const totalItems =
       safeNotes.length +
       safeSnippets.length +
       safeBookmarks.length +
-      safeCheatsheets.length;
+      safeCheatSheets.length;
 
-    const pinnedCount = safeNotes.filter((item) => item?.pinned).length;
-
-    const FavoriteCount = safeSnippets.filter(
-      (item) => item?.isFavorite,
-    ).length;
+    const totalPinned =
+      pinnedNotes + pinnedSnippets + pinnedBookmarks + pinnedCheatSheets;
 
     return `
       <div
         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full col-span-full"
       >
         <div
-          class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-yellow-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
+          class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-sky-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
         >
           <i
-            class="ti ti-article-filled absolute -right-4 -bottom-6 text-[12rem] text-yellow-500 opacity-[0.04] dark:opacity-[0.06] rotate-15 pointer-events-none group-hover:scale-110 group-hover:rotate-5 transition-transform duration-500"
+            class="ti ti-article-filled absolute -right-4 -bottom-6 text-[11rem] text-sky-500 opacity-[0.04] dark:opacity-[0.06] rotate-12 pointer-events-none group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500"
           ></i>
           <div class="flex items-center justify-between z-10">
             <span
               class="text-xs font-bold text-secondary uppercase tracking-wider"
-              >Total Notes</span
+              >Notes</span
             >
             <span
-              class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
-              >Pinned: ${pinnedCount}</span
+              class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center gap-1"
             >
+              <i class="ti ti-pin text-[10px]"></i> ${pinnedNotes} Pinned
+            </span>
           </div>
           <div class="z-10 mt-3">
             <div class="text-3xl font-black text-color tracking-tight">
               ${safeNotes.length}
             </div>
             <p class="text-[11px] text-secondary/80 font-medium mt-1">
-              Registered notes & thoughts
+              Structured thoughts & knowledge
             </p>
           </div>
           <div
             class="mt-4 pt-3 border-t border-border/40 flex items-center justify-between z-10 text-[11px]"
           >
-            <span class="text-secondary">Global Share:</span>
-            <span class="font-bold text-color"
-              >${totalEntities > 0 ? Math.round((safeNotes.length / totalEntities) * 100) : 0}%</span
-            >
+            <span class="text-secondary">Type Index:</span>
+            <span class="font-bold text-sky-400">Notes Engine</span>
           </div>
         </div>
 
         <div
-          class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-purple-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
+          class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-violet-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
         >
           <i
-            class="ti ti-code absolute -right-4 -bottom-6 text-[12rem] text-purple-500 opacity-[0.04] dark:opacity-[0.06] rotate-20 pointer-events-none group-hover:scale-110 group-hover:rotate-10 transition-transform duration-500"
+            class="ti ti-code absolute -right-4 -bottom-6 text-[11rem] text-violet-500 opacity-[0.04] dark:opacity-[0.06] rotate-12 pointer-events-none group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500"
           ></i>
           <div class="flex items-center justify-between z-10">
             <span
@@ -76,30 +82,24 @@ export const DashboardComponent = {
               >Code Snippets</span
             >
             <span
-              class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20"
-              >Favorite: ${FavoriteCount}</span
+              class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-violet-500/10 text-violet-400 border border-violet-500/20 flex items-center gap-1"
             >
+              <i class="ti ti-pin text-[10px]"></i> ${pinnedSnippets} Pinned
+            </span>
           </div>
           <div class="z-10 mt-3">
             <div class="text-3xl font-black text-color tracking-tight">
               ${safeSnippets.length}
             </div>
-            <div
-              class="w-1/4 h-1.5 bg-surface rounded-full overflow-hidden mt-2"
-            >
-              <div
-                class="h-full bg-purple-500 transition-all duration-500 rounded-full"
-                style="width: ${totalEntities > 0 ? (safeSnippets.length / totalEntities) * 100 : 0}%"
-              ></div>
-            </div>
+            <p class="text-[11px] text-secondary/80 font-medium mt-1">
+              Reusable blocks & logic
+            </p>
           </div>
           <div
             class="mt-4 pt-3 border-t border-border/40 flex items-center justify-between z-10 text-[11px]"
           >
-            <span class="text-secondary">Library Density:</span>
-            <span class="font-bold text-purple-500"
-              >${safeSnippets.length > 0 ? "Active" : "Empty"}</span
-            >
+            <span class="text-secondary">Type Index:</span>
+            <span class="font-bold text-violet-400">Code Vault</span>
           </div>
         </div>
 
@@ -107,55 +107,65 @@ export const DashboardComponent = {
           class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-emerald-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
         >
           <i
-            class="ti ti-bookmark-filled absolute -right-4 -bottom-6 text-[12rem] text-emerald-500 opacity-[0.04] dark:opacity-[0.06] rotate-15 pointer-events-none group-hover:scale-110 group-hover:rotate-5 transition-transform duration-500"
+            class="ti ti-bookmark-filled absolute -right-4 -bottom-6 text-[11rem] text-emerald-500 opacity-[0.04] dark:opacity-[0.06] rotate-12 pointer-events-none group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500"
           ></i>
           <div class="flex items-center justify-between z-10">
             <span
               class="text-xs font-bold text-secondary uppercase tracking-wider"
               >Bookmarks</span
             >
+            <span
+              class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1"
+            >
+              <i class="ti ti-pin text-[10px]"></i> ${pinnedBookmarks} Pinned
+            </span>
           </div>
           <div class="z-10 mt-3">
             <div class="text-3xl font-black text-color tracking-tight">
               ${safeBookmarks.length}
             </div>
             <p class="text-[11px] text-secondary/80 font-medium mt-1">
-              Curated web resources
+              Curated links & resources
             </p>
           </div>
           <div
             class="mt-4 pt-3 border-t border-border/40 flex items-center justify-between z-10 text-[11px]"
           >
-            <span class="text-secondary">Sync Status:</span>
-            <span class="font-bold text-emerald-500">Synced Local</span>
+            <span class="text-secondary">Type Index:</span>
+            <span class="font-bold text-emerald-400">Link Index</span>
           </div>
         </div>
 
         <div
-          class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-sky-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
+          class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-yellow-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
         >
           <i
-            class="ti ti-stack-2-filled absolute -right-6 -bottom-8 text-[14rem] text-sky-500 opacity-[0.04] dark:opacity-[0.06] rotate-15 pointer-events-none group-hover:scale-110 group-hover:rotate-5 transition-transform duration-500"
+            class="ti ti-file-description-filled absolute -right-4 -bottom-6 text-[11rem] text-yellow-500 opacity-[0.04] dark:opacity-[0.06] rotate-12 pointer-events-none group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500"
           ></i>
           <div class="flex items-center justify-between z-10">
             <span
               class="text-xs font-bold text-secondary uppercase tracking-wider"
               >CheatSheets</span
             >
+            <span
+              class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 flex items-center gap-1"
+            >
+              <i class="ti ti-pin text-[10px]"></i> ${pinnedCheatSheets} Pinned
+            </span>
           </div>
           <div class="z-10 mt-3">
             <div class="text-3xl font-black text-color tracking-tight">
-              ${safeCheatsheets.length}
+              ${safeCheatSheets.length}
             </div>
             <p class="text-[11px] text-secondary/80 font-medium mt-1">
-              Reference documentation
+              Quick reference & shortcuts
             </p>
           </div>
           <div
             class="mt-4 pt-3 border-t border-border/40 flex items-center justify-between z-10 text-[11px]"
           >
-            <span class="text-secondary">Blueprint Index:</span>
-            <span class="font-bold text-sky-500">Ready</span>
+            <span class="text-secondary">Type Index:</span>
+            <span class="font-bold text-yellow-400">Quick Reference</span>
           </div>
         </div>
       </div>
@@ -280,9 +290,7 @@ export const DashboardComponent = {
         </div>
       </div>
 
-      <div
-        class="grid grid-cols-1 gap-6 w-full col-span-full mt-6"
-      >
+      <div class="grid grid-cols-1 gap-6 w-full col-span-full mt-6">
         <div
           class="bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between shadow-sm"
         >
@@ -292,7 +300,8 @@ export const DashboardComponent = {
               Module Distribution
             </h4>
             <p class="text-xs text-secondary mt-1">
-              Proportion of entries across Notes, Snippets, Bookmarks, and CheatSheets.
+              Proportion of entries across Notes, Snippets, Bookmarks, and
+              CheatSheets.
             </p>
           </div>
           <div
@@ -336,9 +345,7 @@ export const DashboardComponent = {
         >
           <div>
             <h4 class="text-lg font-bold text-color flex items-center gap-2">
-              <i
-                class="ti ti-adjustments-horizontal text-brand text-xl"
-              ></i>
+              <i class="ti ti-adjustments-horizontal text-brand text-xl"></i>
               Entity Metrics
             </h4>
             <p class="text-xs text-secondary mt-1">
@@ -357,24 +364,25 @@ export const DashboardComponent = {
       </div>
 
       <div
-        class="w-full col-span-full mt-6 bg-surface-2 border border-border/75 rounded-2xl p-6 shadow-sm"
+        class="w-full col-span-full mt-6 bg-surface-2 border border-border/75 rounded-2xl p-6 shadow-xs"
       >
         <div
           class="flex flex-wrap sm:flex-nowrap items-center justify-center sm:justify-between gap-4 pb-4 border-b border-border/40"
         >
           <div>
             <h4 class="text-lg font-bold text-color flex items-center gap-2">
-              <i class="ti ti-stack-3 text-brand text-xl"></i>
-              Entities Detailed Breakdown
+              <i class="ti ti-layers-intersect text-brand text-xl"></i>
+              Mind Manager Breakdown
             </h4>
             <p class="text-xs text-secondary mt-0.5">
-              Switch tabs to review underlying system modules.
+              Total ${totalItems} items (${totalPinned} pinned) across
+              ${safeTags.length} active tag definitions.
             </p>
           </div>
 
           <div
             id="entity-tab-switcher"
-            class="relative flex items-center p-1 bg-surface rounded-xl border border-border/80 shadow-inner"
+            class="relative flex items-center p-1 bg-surface rounded-xl border border-border/80 shadow-inner overflow-x-auto"
           >
             <div
               id="entity-tab-indicator"
@@ -383,27 +391,27 @@ export const DashboardComponent = {
 
             <button
               data-entity-tab="notes"
-              class="entity-tab-btn relative z-10 px-3.5 py-1.5 text-xs font-bold text-white transition cursor-pointer"
+              class="entity-tab-btn relative z-10 px-3.5 py-1.5 text-xs font-bold text-white transition cursor-pointer whitespace-nowrap"
             >
               Notes (${safeNotes.length})
             </button>
             <button
               data-entity-tab="snippets"
-              class="entity-tab-btn relative z-10 px-3.5 py-1.5 text-xs font-bold text-secondary transition cursor-pointer"
+              class="entity-tab-btn relative z-10 px-3.5 py-1.5 text-xs font-bold text-secondary transition cursor-pointer whitespace-nowrap"
             >
               Snippets (${safeSnippets.length})
             </button>
             <button
               data-entity-tab="bookmarks"
-              class="entity-tab-btn relative z-10 px-3.5 py-1.5 text-xs font-bold text-secondary transition cursor-pointer"
+              class="entity-tab-btn relative z-10 px-3.5 py-1.5 text-xs font-bold text-secondary transition cursor-pointer whitespace-nowrap"
             >
               Bookmarks (${safeBookmarks.length})
             </button>
             <button
               data-entity-tab="cheatsheets"
-              class="entity-tab-btn relative z-10 px-3.5 py-1.5 text-xs font-bold text-secondary transition cursor-pointer"
+              class="entity-tab-btn relative z-10 px-3.5 py-1.5 text-xs font-bold text-secondary transition cursor-pointer whitespace-nowrap"
             >
-              CheatSheets (${safeCheatsheets.length})
+              CheatSheets (${safeCheatSheets.length})
             </button>
           </div>
         </div>
@@ -413,28 +421,92 @@ export const DashboardComponent = {
             id="tab-panel-notes"
             class="entity-panel space-y-3"
           >
-            ${this.renderGenericList(safeNotes, "notes")}
+            ${this.renderNotesList(safeNotes, safeTags)}
           </div>
           <div
             id="tab-panel-snippets"
             class="entity-panel hidden space-y-3"
           >
-            ${this.renderGenericList(safeSnippets, "snippets")}
+            ${this.renderSnippetsList(safeSnippets, safeTags)}
           </div>
           <div
             id="tab-panel-bookmarks"
             class="entity-panel hidden space-y-3"
           >
-            ${this.renderGenericList(safeBookmarks, "bookmarks")}
+            ${this.renderBookmarksList(safeBookmarks, safeTags)}
           </div>
           <div
             id="tab-panel-cheatsheets"
             class="entity-panel hidden space-y-3"
           >
-            ${this.renderGenericList(safeCheatsheets, "cheatsheets")}
+            ${this.renderCheatSheetsList(safeCheatSheets, safeTags)}
           </div>
         </div>
       </div>
+    `;
+  },
+
+  _getCategoryBadgeHtml(category, itemType) {
+    const badges = {
+      notes: NOTE_CATEGORIES,
+      snippets: SNIPPET_CATEGORIES,
+      bookmarks: BOOKMARK_CATEGORIES,
+      cheatsheets: CHEATSHEET_CATEGORIES,
+    };
+
+    const target = badges[itemType] || badges.notes;
+
+    const matched = target.find((cat) => String(cat.id) === String(category));
+
+    const catData = matched || {
+      name: category || "General",
+      icon: "ti ti-folder-filled text-secondary",
+      class: "bg-surface text-secondary border-border/60",
+    };
+
+    const iconClass = catData.icon;
+
+    return `
+        <span
+          class="inline-flex items-center gap-1 rounded-md border ${catData.class} px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+        >
+          <i class="${iconClass} text-xs pb-0.5"></i>
+          <span>${catData.name}</span>
+        </span>
+      `;
+  },
+
+  _getTagsBadgeHtml(tagIds = [], allTags = []) {
+    if (!Array.isArray(tagIds) || tagIds.length === 0) return "";
+    const matchedTags = allTags.filter((tag) => tagIds.includes(tag.id));
+    if (matchedTags.length === 0) return "";
+
+    return `
+      <div class="flex items-center gap-1.5 flex-wrap">
+        ${matchedTags
+          .map(
+            (tag) => `
+              <span
+                class="inline-flex items-center gap-1 rounded-md bg-surface-3/50 px-2 py-0.5 text-[10px] text-secondary/80 border border-border/30"
+              >
+                <i class="ti ti-tag text-xs pb-0.5"></i>
+                <span>${tag.name}</span>
+              </span>
+            `,
+          )
+          .join("")}
+      </div>
+    `;
+  },
+
+  _getPinnedBadgeHtml(pinned) {
+    if (!pinned) return "";
+    return `
+      <span
+        class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
+      >
+        <i class="ti ti-pinned-filled text-[11px]"></i> Pinned
+      </span>
     `;
   },
 
@@ -485,112 +557,20 @@ export const DashboardComponent = {
     }
   },
 
-  _getCategoryBadgeHtml(category, itemType) {
-    const badges = {
-      notes: NOTE_CATEGORIES,
-      snippets: SNIPPET_CATEGORIES,
-      bookmarks: BOOKMARK_CATEGORIES,
-      cheatsheets: CHEATSHEET_CATEGORIES,
-    };
-
-    const target = badges[itemType] || badges.notes;
-
-    const matched = target.find((cat) => String(cat.id) === String(category));
-
-    const catData = matched || {
-      name: category || "General",
-      icon: "ti ti-folder-filled text-secondary",
-      class: "bg-surface text-secondary border-border/60",
-    };
-
-    const iconClass = catData.icon;
-
-    return `
-      <span
-        class="inline-flex items-center gap-1 rounded-md border ${catData.class} px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
-      >
-        <i class="${iconClass} text-xs pb-0.5"></i>
-        <span>${catData.name}</span>
-      </span>
-    `;
-  },
-
-  _getModuleBadgeHtml(itemType) {
-    const badges = {
-      notes: {
-        color: "border-sky-500/30 bg-sky-500/10 text-sky-400",
-        icon: "ti-note",
-        label: "Note",
-      },
-      snippets: {
-        color: "border-purple-500/30 bg-purple-500/10 text-purple-400",
-        icon: "ti-code",
-        label: "Snippet",
-      },
-      bookmarks: {
-        color: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-        icon: "ti-bookmark",
-        label: "Bookmark",
-      },
-      cheatsheets: {
-        color: "border-amber-500/30 bg-amber-500/10 text-amber-400",
-        icon: "ti-stack-2",
-        label: "CheatSheet",
-      },
-    };
-
-    const target = badges[itemType] || badges.notes;
-
-    return `
-      <span class="inline-flex items-center gap-1 rounded-md border ${target.color} px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
-        <i class="ti ${target.icon} text-[11px]"></i>
-        <span>${target.label}</span>
-      </span>
-    `;
-  },
-
-  renderGenericList(items = [], itemType = "notes") {
-    if (!Array.isArray(items) || items.length === 0) {
-      return `<div
-        class="p-12 text-center text-secondary text-sm border border-dashed border-border/80 rounded-2xl bg-surface/30"
-      >
-        No ${itemType} records registered in current state repository.
+  renderNotesList(notes, tags) {
+    if (!Array.isArray(notes) || notes.length === 0) {
+      return `<div class="p-12 text-center text-secondary text-sm border border-dashed border-border/80 rounded-2xl bg-surface/30">
+        No notes registered in state repository.
       </div>`;
     }
-
-    return items
-      .map((item) => {
-        const isPinned = item?.pinned;
-        const isFavorite = item?.isFavorite;
-        const typeBadge = this._getModuleBadgeHtml(itemType);
+    return notes
+      .map((note) => {
         const categoryBadge = this._getCategoryBadgeHtml(
-          item?.category,
-          itemType,
+          note.category,
+          "notes",
         );
-
-        const statusBadge = isPinned
-          ? `<span class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
-               <i class="ti ti-pinned-filled text-[11px]"></i> Pinned
-             </span>`
-          : isFavorite
-            ? `<span class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
-                 <i class="ti ti-star-filled text-[10px]"></i> Favorite
-               </span>`
-            : "";
-
-        const tagsHtml =
-          Array.isArray(item?.tags) && item.tags.length > 0
-            ? item.tags
-                .map(
-                  (tag) => `
-                  <span class="inline-flex items-center gap-1 rounded-md bg-surface-3/50 px-2 py-0.5 text-[10px] text-secondary/80 border border-border/30">
-                    <i class="ti ti-tags text-[10px] opacity-60"></i>
-                    <span>${tag}</span>
-                  </span>
-                `,
-                )
-                .join("")
-            : "";
+        const pinnedBadge = this._getPinnedBadgeHtml(note.pinned);
+        const tagIdsHtml = this._getTagsBadgeHtml(note.tagIds, tags);
 
         return `
           <div
@@ -598,27 +578,192 @@ export const DashboardComponent = {
           >
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                ${typeBadge}
-                ${categoryBadge}
-                ${statusBadge}
-                ${tagsHtml}
+                ${categoryBadge} ${pinnedBadge} ${tagIdsHtml}
               </div>
               <h5
-                class="text-sm font-bold text-color group-hover:text-brand transition-colors truncate"
+                class="text-sm font-bold text-color group-hover:text-sky-400 transition-colors truncate"
               >
-                ${item?.title || item?.name || "Untitled"}
+                ${note.title}
               </h5>
               <p
                 class="text-xs text-secondary/90 line-clamp-1 mt-0.5 font-normal"
               >
-                ${item?.description || item?.content || item?.url || "No additional description provided."}
+                ${note.content || "No content provided."}
               </p>
             </div>
-
-            <div class="text-left shrink-0 text-[8px] xs:text-[9px] sm:text-xs text-secondary font-medium">
+            <div
+              class="text-left shrink-0 text-[10px] text-secondary font-medium font-sans"
+            >
               <span
-                class="bg-surface px-2.5 py-1 rounded-lg border border-border/40 flex font-sans"
-                >ID: ${item?.id || "N/A"}</span
+                class="bg-surface px-2.5 py-1 rounded-lg border border-border/40 block"
+                >ID: ${note.id}</span
+              >
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  },
+
+  renderSnippetsList(snippets, tags) {
+    if (!Array.isArray(snippets) || snippets.length === 0) {
+      return `<div
+        class="p-12 text-center text-secondary text-sm border border-dashed border-border/80 rounded-2xl bg-surface/30"
+      >
+        No code snippets registered in state repository.
+      </div>`;
+    }
+    return snippets
+      .map((snippet) => {
+        const categoryBadge = this._getCategoryBadgeHtml(
+          snippet.category,
+          "snippets",
+        );
+        const pinnedBadge = this._getPinnedBadgeHtml(snippet.pinned);
+        const tagIdsHtml = this._getTagsBadgeHtml(snippet.tagIds, tags);
+
+        return `
+          <div
+            class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-surface/70 border border-border/50 hover:bg-surface transition group shadow-2xs"
+          >
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                ${categoryBadge} ${pinnedBadge} ${tagIdsHtml}
+              </div>
+              <h5
+                class="text-sm font-bold text-color group-hover:text-purple-400 transition-colors truncate"
+              >
+                ${snippet.title}
+              </h5>
+              <p
+                class="text-xs text-secondary/90 line-clamp-1 mt-0.5 font-normal"
+              >
+                ${snippet.description || "No description provided."}
+              </p>
+            </div>
+            <div
+              class="text-left shrink-0 text-[10px] text-secondary font-medium font-sans"
+            >
+              <span
+                class="bg-surface px-2.5 py-1 rounded-lg border border-border/40 block"
+                >ID: ${snippet.id}</span
+              >
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  },
+
+  renderBookmarksList(bookmarks, tags) {
+    if (!Array.isArray(bookmarks) || bookmarks.length === 0) {
+      return `<div
+        class="p-12 text-center text-secondary text-sm border border-dashed border-border/80 rounded-2xl bg-surface/30"
+      >
+        No bookmarks saved in state repository.
+      </div>`;
+    }
+    return bookmarks
+      .map((bookmark) => {
+        const categoryBadge = this._getCategoryBadgeHtml(
+          bookmark.category,
+          "bookmarks",
+        );
+        const pinnedBadge = this._getPinnedBadgeHtml(bookmark.pinned);
+        const tagIdsHtml = this._getTagsBadgeHtml(bookmark.tagIds, tags);
+
+        return `
+          <div
+            class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-surface/70 border border-border/50 hover:bg-surface transition group shadow-2xs"
+          >
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                <span
+                  class="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 uppercase tracking-wider"
+                >
+                  <i class="ti ti-world text-[10px]"></i> ${
+                    bookmark.domain || "link"
+                  }
+                </span>
+                ${categoryBadge} ${pinnedBadge} ${tagIdsHtml}
+              </div>
+              <h5
+                class="text-sm font-bold text-color group-hover:text-emerald-400 transition-colors truncate"
+              >
+                ${bookmark.title}
+              </h5>
+              <p
+                class="text-xs text-secondary/90 line-clamp-1 mt-0.5 font-normal"
+              >
+                ${bookmark.url || bookmark.description || "No URL specified."}
+              </p>
+            </div>
+            <div
+              class="text-left shrink-0 text-[10px] text-secondary font-medium font-sans"
+            >
+              <span
+                class="bg-surface px-2.5 py-1 rounded-lg border border-border/40 block"
+                >ID: ${bookmark.id}</span
+              >
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  },
+
+  renderCheatSheetsList(cheatsheets, tags) {
+    if (!Array.isArray(cheatsheets) || cheatsheets.length === 0) {
+      return `<div
+        class="p-12 text-center text-secondary text-sm border border-dashed border-border/80 rounded-2xl bg-surface/30"
+      >
+        No cheatsheets saved in state repository.
+      </div>`;
+    }
+    return cheatsheets
+      .map((cheatsheet) => {
+        const categoryBadge = this._getCategoryBadgeHtml(
+          cheatsheet.category,
+          "cheatsheets",
+        );
+        const pinnedBadge = this._getPinnedBadgeHtml(cheatsheet.pinned);
+        const tagIdsHtml = this._getTagsBadgeHtml(cheatsheet.tagIds, tags);
+        const itemCount = Array.isArray(cheatsheet.items)
+          ? cheatsheet.items.length
+          : 0;
+
+        return `
+          <div
+            class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-surface/70 border border-border/50 hover:bg-surface transition group shadow-2xs"
+          >
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                <span
+                  class="inline-flex items-center gap-1 rounded-md border border-border/40 bg-surface px-2 py-0.5 text-[10px] font-bold text-secondary"
+                >
+                  ${itemCount} Items
+                </span>
+                ${categoryBadge} ${pinnedBadge} ${tagIdsHtml}
+              </div>
+              <h5
+                class="text-sm font-bold text-color group-hover:text-amber-400 transition-colors truncate"
+              >
+                ${cheatsheet.title}
+              </h5>
+              <p
+                class="text-xs text-secondary/90 line-clamp-1 mt-0.5 font-normal"
+              >
+                ${
+                  cheatsheet.description || "No baseline configuration details."
+                }
+              </p>
+            </div>
+            <div
+              class="text-left shrink-0 text-[10px] text-secondary font-medium font-sans"
+            >
+              <span
+                class="bg-surface px-2.5 py-1 rounded-lg border border-border/40 block"
+                >ID: ${cheatsheet.id}</span
               >
             </div>
           </div>

@@ -48,3 +48,53 @@ export function formatDate(date) {
 export function todayISO() {
   return formatDate(new Date());
 }
+
+export function mapTagIdsToObjects(tagIds = [], globalTags = []) {
+  if (!Array.isArray(tagIds)) return [];
+  return tagIds
+    .map((id) => globalTags.find((t) => t.id === id))
+    .filter(Boolean);
+}
+
+export function processTagPipeline(
+  componentItems = [],
+  existingTags = [],
+  entityType = "notes",
+) {
+  const updatedGlobalTags = [...existingTags];
+  const assignedTagIds = [];
+
+  componentItems.forEach((item) => {
+    const isNewFlag = typeof item === "object" && (item.isNew || !item.id);
+    const itemTitle = typeof item === "object" ? item.name : item;
+
+    if (!itemTitle) return;
+
+    let match = updatedGlobalTags.find(
+      (t) => t.name.toLowerCase() === itemTitle.trim().toLowerCase(),
+    );
+
+    if (isNewFlag && !match) {
+      const newTag = {
+        id: generateId(),
+        name: itemTitle.trim(),
+        entityType: entityType,
+      };
+      updatedGlobalTags.push(newTag);
+      assignedTagIds.push(newTag.id);
+    } else if (match) {
+      assignedTagIds.push(match.id);
+    } else if (typeof item === "object" && item.id) {
+      assignedTagIds.push(item.id);
+    }
+  });
+
+  return {
+    assignedTagIds,
+    updatedGlobalTags,
+  };
+}
+
+export function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}

@@ -1,4 +1,6 @@
 import { MindItemComponent } from "@/components/features/mind/mind-item.component";
+import { capitalize } from "@/utils/helpers";
+import { state } from "@/models/state.model";
 
 export function renderMindList(items, activeTab = "notes") {
   const container = document.getElementById("mind-list");
@@ -18,7 +20,9 @@ export function renderMindList(items, activeTab = "notes") {
     const currentLabel = labels[activeTab] || "items";
 
     countBadge.innerHTML = `
-      <p class="text-secondary font-semibold text-sm p-0.5 flex items-center gap-2">
+      <p
+        class="text-secondary font-semibold text-sm p-0.5 flex items-center gap-2"
+      >
         <span class="text-brand/80 font-extrabold">${totalCount}</span>
         <span>${currentLabel}</span>
       </p>
@@ -75,45 +79,73 @@ export function renderMindList(items, activeTab = "notes") {
     itemEl.innerHTML = MindItemComponent.render(itemData, activeTab);
     return itemEl;
   };
+  const pinnedItems = items.filter((item) => item.pinned);
+  const unpinnedItems = items.filter((item) => !item.pinned);
 
-  if (activeTab === "notes") {
-    const pinnedNotes = items.filter((note) => note.pinned);
-    const unpinnedNotes = items.filter((note) => !note.pinned);
+  if (pinnedItems.length > 0 && unpinnedItems.length > 0) {
+    pinnedItems.forEach((item) => {
+      container.appendChild(createCard(item));
+    });
 
-    if (pinnedNotes.length > 0) {
-      pinnedNotes.forEach((note) => {
-        container.appendChild(createCard(note));
-      });
+    const dropdownIcon = {
+      notes: "ti-article text-sky-500/80",
+      snippets: "ti-code text-violet-500/80",
+      bookmarks: "ti-bookmark text-emerald-500/80",
+      cheatsheets: "ti-file-description text-yellow-500/80",
+    };
 
-      if (unpinnedNotes.length > 0) {
-        const separatorWrapper = document.createElement("div");
-        separatorWrapper.className = "w-full my-6 flex flex-col gap-4";
+    const target = dropdownIcon[state.activeTab] || dropdownIcon.notes;
 
-        separatorWrapper.innerHTML = `
-          <div class="relative flex items-center justify-center">
-            <div class="absolute inset-0 flex items-center">
-              <div class="w-full border-t border-border/60"></div>
-            </div>
-            <span class="relative bg-surface px-4 text-xs font-bold uppercase tracking-wider text-muted rounded-full border border-border/60 shadow-xs">
-              Other Notes (${unpinnedNotes.length})
-            </span>
-          </div>
-        `;
+    const separatorWrapper = document.createElement("div");
+    separatorWrapper.className = "w-full my-6 flex flex-col gap-4";
 
-        container.appendChild(separatorWrapper);
+    separatorWrapper.innerHTML = `
+      <div class="relative flex items-center justify-center">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-border/60"></div>
+        </div>
+        <button
+          id="toggle-unpinned-btn"
+          type="button"
+          class="group relative bg-surface hover:bg-surface-2 transition px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2 rounded-full border border-border/60 shadow-xs cursor-pointer select-none"
+        >
+          <i class="ti ${target} text-sm"></i>
+          <span>Other ${state.activeTab} (${unpinnedItems.length})</span>
+          <span
+            class="inline-flex transition duration-300 group-[.is-collapsed]:rotate-180"
+          >
+            <i class="ti ti-chevron-down text-[10px] text-muted"></i>
+          </span>
+        </button>
+      </div>
+      <div
+        id="unpinned-items-container"
+        class="flex flex-col gap-4 transition-all duration-300"
+      ></div>
+    `;
 
-        unpinnedNotes.forEach((note) => {
-          container.appendChild(createCard(note));
-        });
-      }
-    } else {
-      unpinnedNotes.forEach((note) => {
-        container.appendChild(createCard(note));
-      });
-    }
+    container.appendChild(separatorWrapper);
+
+    const unpinnedContainer = separatorWrapper.querySelector(
+      "#unpinned-items-container",
+    );
+    const toggleBtn = separatorWrapper.querySelector("#toggle-unpinned-btn");
+
+    unpinnedItems.forEach((item) => {
+      unpinnedContainer.appendChild(createCard(item));
+    });
+
+    toggleBtn.addEventListener("click", () => {
+      const isCollapsed = toggleBtn.classList.toggle("is-collapsed");
+      unpinnedContainer.classList.toggle("hidden", isCollapsed);
+    });
+  } else if (pinnedItems.length > 0) {
+    pinnedItems.forEach((item) => {
+      container.appendChild(createCard(item));
+    });
   } else {
-    items.forEach((itemData) => {
-      container.appendChild(createCard(itemData));
+    unpinnedItems.forEach((item) => {
+      container.appendChild(createCard(item));
     });
   }
 }

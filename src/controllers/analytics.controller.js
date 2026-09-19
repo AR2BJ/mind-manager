@@ -33,21 +33,30 @@ export const AnalyticsController = {
 
     updateTabStyles(tab);
 
+    const tags = StateManager.getTags() || [];
     const notes = StateManager.getNotes() || [];
     const snippets = StateManager.getSnippets() || [];
     const bookmarks = StateManager.getBookmarks() || [];
     const cheatsheets = StateManager.getCheatSheets() || [];
 
-    updateHeatmapChart(notes, snippets, bookmarks, cheatsheets, tab);
+    updateHeatmapChart(tags, notes, snippets, bookmarks, cheatsheets, tab);
   },
 
   dispatchRender() {
+    const tags = StateManager.getTags() || [];
     const notes = StateManager.getNotes() || [];
     const snippets = StateManager.getSnippets() || [];
     const bookmarks = StateManager.getBookmarks() || [];
     const cheatsheets = StateManager.getCheatSheets() || [];
     const currentView = StateManager.getHeatmapView();
 
-    renderAnalyticsCharts(notes, snippets, bookmarks, cheatsheets, currentView);
+    renderAnalyticsCharts(
+      tags,
+      notes,
+      snippets,
+      bookmarks,
+      cheatsheets,
+      currentView,
+    );
   },
 };
