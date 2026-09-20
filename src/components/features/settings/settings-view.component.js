@@ -1,4 +1,5 @@
 import { SettingsResetComponent } from "@/components/modals/settings-reset-modal.component.js";
+import { TagDeleteModalComponent } from "@/components/modals/delete-tag-modal.component";
 
 export const SettingsViewComponent = {
   render() {
@@ -75,11 +76,54 @@ export const SettingsViewComponent = {
           </div>
 
           <div
+            class="bg-surface rounded-2xl p-4 sm:p-6 flex flex-col gap-4 shadow-sm border border-border"
+          >
+            <div class="flex items-center gap-3 border-b border-border pb-3">
+              <div
+                class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500/80 flex items-center justify-center shrink-0"
+              >
+                <i class="ti ti-tags text-sm lg:text-base"></i>
+              </div>
+              <div class="min-w-0">
+                <h3
+                  class="text-sm sm:text-base font-semibold text-color truncate"
+                >
+                  Global Tag Management
+                </h3>
+                <p class="text-[11px] sm:text-xs text-secondary truncate">
+                  Create, edit, or remove workspace tags globally.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex flex-col xs:flex-row gap-2 items-center">
+              <input
+                type="text"
+                id="sett-new-tag-input"
+                placeholder="Enter new tag name..."
+                class="w-full h-10 bg-surface-2 border border-border rounded-xl px-3.5 py-2 text-xs sm:text-sm text-color placeholder:text-muted truncate focus:outline-none focus:border-brand/80 transition"
+              />
+              <button
+                id="sett-add-tag-btn"
+                class="w-full xs:w-auto px-4 py-2.5 bg-brand/80 hover:bg-brand text-white font-medium text-xs sm:text-sm rounded-xl transition cursor-pointer shrink-0 flex justify-center items-center gap-1.5"
+              >
+                <i class="ti ti-plus"></i>
+                <span>Add Tag</span>
+              </button>
+            </div>
+
+            <div
+              id="sett-tags-list"
+              class="flex flex-col gap-2 mt-2 max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-surface-2 pe-1"
+            ></div>
+          </div>
+
+          <div
             class="bg-surface rounded-2xl p-4 sm:p-6 flex flex-col gap-6 shadow-sm border border-border"
           >
             <div class="flex items-center gap-3 border-b border-border pb-3">
               <div
-                class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500/80 flex items-center justify-center shrink-0"
+                class="w-8 h-8 rounded-lg bg-violet-500/10 text-violet-500/80 flex items-center justify-center shrink-0"
               >
                 <i class="ti ti-share text-sm lg:text-base"></i>
               </div>
@@ -222,6 +266,7 @@ export const SettingsViewComponent = {
         </div>
 
         ${SettingsResetComponent.render()}
+        ${TagDeleteModalComponent.render()}
       </section>
     `;
   },

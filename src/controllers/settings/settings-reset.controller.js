@@ -71,6 +71,7 @@ export const SettingsResetController = {
 
   executeApplicationReset() {
     const previousPayload = localStorage.getItem(STORAGE_KEY);
+    const previousTags = StateManager.getTags().map((tag) => ({ ...tag }));
     const previousNotes = StateManager.getNotes().map((note) => ({ ...note }));
     const previousSnippets = StateManager.getSnippets().map((snippet) => ({
       ...snippet,
@@ -92,6 +93,7 @@ export const SettingsResetController = {
       try {
         localStorage.removeItem(STORAGE_KEY);
 
+        state.tags = [];
         state.notes = [];
         state.snippets = [];
         state.bookmarks = [];
@@ -123,12 +125,14 @@ export const SettingsResetController = {
                 }
 
                 StateManager.save({
+                  tags: previousTags || [],
                   notes: previousNotes || [],
                   snippets: previousSnippets || [],
                   bookmarks: previousBookmarks || [],
                   cheatsheets: previousCheatSheets || [],
                 });
 
+                state.tags = previousTags || [];
                 state.notes = previousNotes || [];
                 state.snippets = previousSnippets || [];
                 state.bookmarks = previousBookmarks || [];

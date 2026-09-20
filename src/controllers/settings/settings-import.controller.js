@@ -3,6 +3,8 @@ import { StateManager, state } from "@/models/state.model.js";
 import { GlobalLoaderService } from "@/services/loader.service";
 import { MindController } from "../mind.controller.js";
 import { NotificationService } from "@/services/notification.service.js";
+import { SettingsTagController } from "./settings-tag.controller.js";
+import { renderMindList } from "@/views/mind/mind-list.renderer.js";
 
 export const SettingsImportController = {
   init() {
@@ -118,7 +120,13 @@ export const SettingsImportController = {
           state.activeTab = "notes";
           state.currentView = "mind";
 
+          renderMindList(
+            StateManager.getFilteredDataForActiveTab(),
+            state.activeTab,
+          );
+
           MindController.refreshUI();
+          SettingsTagController.renderTagsList();
 
           NotificationService.show({
             type: "success",

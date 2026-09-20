@@ -10,6 +10,7 @@ import {
   generateId,
   mapTagIdsToObjects,
   processTagPipeline,
+  syncTagEntityTypes,
 } from "@/utils/helpers";
 
 import { AutocompleteComponent } from "@/components/ui/autocomplete.component.js";
@@ -353,20 +354,16 @@ export const MindFormController = {
     const container = document.getElementById("cheatsheet-items-list");
     if (!container) return;
 
-    const total = activeModalCheatSheetItems.length;
-
-    if (total === 0) {
+    if (activeModalCheatSheetItems.length === 0) {
       container.innerHTML = EditModalsComponent.renderEmptyState(
-        "No items defined yet.",
-        "ti ti-table",
+        "No cheatsheet items added yet.",
+        "ti ti-list-check",
       );
       return;
     }
 
     container.innerHTML = `
-      <div
-        class="w-full h-full max-h-30 sm:max-h-25 lg:max-h-23 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-border/60 p-2.5 flex flex-col justify-start gap-2.5"
-      >
+      <div class="w-full flex flex-col gap-2 max-h-56 overflow-y-auto scrollbar-thin scrollbar-thumb-surface-2 pe-1">
         ${activeModalCheatSheetItems
           .map((item) => EditModalsComponent.renderCheatsheetItems(item))
           .join("")}
@@ -451,7 +448,7 @@ export const MindFormController = {
       }
     });
 
-    container?.addEventListener("click", (e) => {
+    container?.addEventListener("click", async (e) => {
       const target = e.target.closest("[data-action]");
       if (!target) return;
 
@@ -460,7 +457,26 @@ export const MindFormController = {
 
       const action = target.dataset.action;
 
-      if (action === "delete-item") {
+      if (action === "copy-item") {
+        const item = activeModalCheatSheetItems.find((i) => i.id === itemId);
+        if (!item || !item.value) return;
+
+        try {
+          await navigator.clipboard.writeText(item.value);
+          NotificationService.show({
+            type: "success",
+            message: "Value copied to clipboard",
+            icon: "ti-copy",
+            duration: 3000,
+          });
+        } catch (err) {
+          NotificationService.show({
+            type: "error",
+            message: "Failed to copy value",
+            icon: "ti-alert-triangle",
+          });
+        }
+      } else if (action === "delete-item") {
         const targetIndex = activeModalCheatSheetItems.findIndex(
           (i) => i.id === itemId,
         );
@@ -636,7 +652,11 @@ export const MindFormController = {
             multiple: true,
           },
         );
-        editNoteTagCombobox.setValue(mappedTags);
+        if (Array.isArray(currentItem.tagIds)) {
+          mappedTags.forEach((tagObj) => {
+            editNoteTagCombobox.selectItem(tagObj);
+          });
+        }
       }
     } else if (activeTab === "snippets") {
       const codeInput = document.getElementById("edit-snippet-code");
@@ -685,7 +705,11 @@ export const MindFormController = {
             multiple: true,
           },
         );
-        editSnippetTagCombobox.setValue(mappedTags);
+        if (Array.isArray(currentItem.tagIds)) {
+          mappedTags.forEach((tagObj) => {
+            editSnippetTagCombobox.selectItem(tagObj);
+          });
+        }
       }
     } else if (activeTab === "bookmarks") {
       const urlInput = document.getElementById("edit-bookmark-url");
@@ -734,7 +758,11 @@ export const MindFormController = {
             multiple: true,
           },
         );
-        editBookmarkTagCombobox.setValue(mappedTags);
+        if (Array.isArray(currentItem.tagIds)) {
+          mappedTags.forEach((tagObj) => {
+            editBookmarkTagCombobox.selectItem(tagObj);
+          });
+        }
       }
     } else if (activeTab === "cheatsheets") {
       const descInput = document.getElementById("edit-cheatsheet-desc");
@@ -786,7 +814,11 @@ export const MindFormController = {
             multiple: true,
           },
         );
-        editCheatSheetTagCombobox.setValue(mappedTags);
+        if (Array.isArray(currentItem.tagIds)) {
+          mappedTags.forEach((tagObj) => {
+            editCheatSheetTagCombobox.selectItem(tagObj);
+          });
+        }
       }
     }
   },
@@ -1206,12 +1238,13 @@ export const MindFormController = {
     setTimeout(() => {
       try {
         const stateData = StateManager.getState();
-        const currentGlobalTags = stateData.tags || [];
+        const currentGlobalTags = StateManager.getTags() || [];
 
         if (activeTab === "notes") {
           const rawSelectedTags = editNoteTagCombobox
-            ? editNoteTagCombobox.getValue()
+            ? editNoteTagCombobox.getSelectedItems()
             : [];
+
           const { updatedGlobalTags, assignedTagIds } = processTagPipeline(
             rawSelectedTags,
             currentGlobalTags,
@@ -1231,11 +1264,19 @@ export const MindFormController = {
               tagIds: assignedTagIds,
             },
           );
-          StateManager.save({ tags: updatedGlobalTags, notes: updatedNotes });
+
+          const cleanedGlobalTags = syncTagEntityTypes(
+            updatedGlobalTags,
+            "notes",
+            updatedNotes,
+          );
+
+          StateManager.save({ tags: cleanedGlobalTags, notes: updatedNotes });
         } else if (activeTab === "snippets") {
           const rawSelectedTags = editSnippetTagCombobox
-            ? editSnippetTagCombobox.getValue()
+            ? editSnippetTagCombobox.getSelectedItems()
             : [];
+
           const { updatedGlobalTags, assignedTagIds } = processTagPipeline(
             rawSelectedTags,
             currentGlobalTags,
@@ -1256,14 +1297,22 @@ export const MindFormController = {
               tagIds: assignedTagIds,
             },
           );
+
+          const cleanedGlobalTags = syncTagEntityTypes(
+            updatedGlobalTags,
+            "snippets",
+            updatedSnippets,
+          );
+
           StateManager.save({
-            tags: updatedGlobalTags,
+            tags: cleanedGlobalTags,
             snippets: updatedSnippets,
           });
         } else if (activeTab === "bookmarks") {
           const rawSelectedTags = editBookmarkTagCombobox
-            ? editBookmarkTagCombobox.getValue()
+            ? editBookmarkTagCombobox.getSelectedItems()
             : [];
+
           const { updatedGlobalTags, assignedTagIds } = processTagPipeline(
             rawSelectedTags,
             currentGlobalTags,
@@ -1284,14 +1333,22 @@ export const MindFormController = {
               tagIds: assignedTagIds,
             },
           );
+
+          const cleanedGlobalTags = syncTagEntityTypes(
+            updatedGlobalTags,
+            "bookmarks",
+            updatedBookmarks,
+          );
+
           StateManager.save({
-            tags: updatedGlobalTags,
+            tags: cleanedGlobalTags,
             bookmarks: updatedBookmarks,
           });
         } else if (activeTab === "cheatsheets") {
           const rawSelectedTags = editCheatSheetTagCombobox
-            ? editCheatSheetTagCombobox.getValue()
+            ? editCheatSheetTagCombobox.getSelectedItems()
             : [];
+
           const { updatedGlobalTags, assignedTagIds } = processTagPipeline(
             rawSelectedTags,
             currentGlobalTags,
@@ -1314,8 +1371,15 @@ export const MindFormController = {
               tagIds: assignedTagIds,
             },
           );
+
+          const cleanedGlobalTags = syncTagEntityTypes(
+            updatedGlobalTags,
+            "cheatsheets",
+            updatedCheatSheets,
+          );
+
           StateManager.save({
-            tags: updatedGlobalTags,
+            tags: cleanedGlobalTags,
             cheatsheets: updatedCheatSheets,
           });
         }

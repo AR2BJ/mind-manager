@@ -1,12 +1,12 @@
 export const EditModalsComponent = {
   renderEmptyState(message, iconClass = "ti ti-list-check") {
     return `
-      <div class="w-full h-full min-h-45 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-dashed border-border/70 p-4 text-center flex flex-col justify-center items-center">
-        <div class="h-full flex flex-col justify-center items-center">
-          <div class="text-3xl text-brand/80">
+      <div class="w-full min-h-32 bg-surface/50 rounded-xl border border-dashed border-border/70 p-4 text-center flex flex-col justify-center items-center">
+        <div class="flex flex-col justify-center items-center">
+          <div class="text-2xl text-brand/80">
             <i class="${iconClass}"></i>
           </div>
-          <p class="mt-3 text-secondary max-w-sm mx-auto text-xs lg:text-sm">
+          <p class="mt-2 text-secondary max-w-sm mx-auto text-xs">
             ${message}
           </p>
         </div>
@@ -15,24 +15,54 @@ export const EditModalsComponent = {
   },
 
   renderCheatsheetItems(item) {
+    const keyText = (item.key ?? "").replace(/"/g, "&quot;");
+    const valText = (item.value ?? "").replace(/"/g, "&quot;");
+    const descText = (item.description ?? "").replace(/"/g, "&quot;");
+
     return `
       <div
         data-item-id="${item.id}"
-        class="item-item flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface-2 p-2.5 shadow-xs transition hover:border-border"
+        class="item-row group flex items-center justify-between gap-3 p-3 bg-surface/80 hover:bg-surface border border-border/60 rounded-xl transition shadow-2xs"
       >
-        <div class="flex flex-wrap items-center flex-1 min-w-0 gap-2">
-          <span class="ps-2 text-xs lg:text-sm font-medium text-brand truncate">
-            ${(item.key ?? "").replace(/"/g, "&quot;")}:
-          </span>
-          <span class="text-color truncate">${item.value}</span>
+        <div class="flex flex-col min-w-0 flex-1 gap-0.5">
+          <div class="flex items-center gap-2">
+            <span
+              class="font-mono font-semibold text-xs lg:text-sm text-color truncate"
+            >
+              ${keyText}
+            </span>
+          </div>
           ${
-            item.description
-              ? `<span class="h-6 text-secondary text-xs lg:text-sm truncate ps-2 border-s border-border flex justify-center items-center">${item.description}</span>`
+            descText
+              ? `<span class="text-[11px] text-secondary/80 truncate">${descText}</span>`
               : ""
           }
         </div>
 
         <div class="flex items-center gap-1.5 shrink-0">
+          ${
+            valText
+              ? `
+                <span
+                  class="h-7 sm:h-9 font-mono text-xs font-semibold px-2.5 py-1 rounded-xl bg-brand/10 text-brand border border-brand/20 tracking-wider select-all flex justify-center items-center gap-1.5"
+                  title="${valText}"
+                >
+                  ${valText}
+                </span>
+              `
+              : ""
+          }
+
+          <button
+            type="button"
+            data-action="copy-item"
+            data-item-id="${item.id}"
+            class="copy-btn h-7 w-7 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-brand/10 hover:cursor-pointer transition"
+            title="Copy Value"
+          >
+            <i class="ti ti-copy text-brand/80 text-sm lg:text-base"></i>
+          </button>
+
           <button
             type="button"
             data-action="edit-item"
@@ -40,7 +70,9 @@ export const EditModalsComponent = {
             class="edit-btn h-7 w-7 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-blue-600/10 hover:cursor-pointer transition"
             title="Edit Item"
           >
-            <i class="ti ti-edit-circle text-blue-500/80 text-sm lg:text-base"></i>
+            <i
+              class="ti ti-edit-circle text-blue-500/80 text-sm lg:text-base"
+            ></i>
           </button>
 
           <button
@@ -180,7 +212,8 @@ export const EditModalsComponent = {
                     >
                     <textarea
                       id="edit-snippet-desc"
-                      rows="2"                      placeholder="Short description..."
+                      rows="2"
+                      placeholder="Short description..."
                       class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
                     ></textarea>
                   </div>
@@ -505,7 +538,7 @@ export const EditModalsComponent = {
                     class="w-full h-10 rounded-xl bg-brand/10 text-brand/80 hover:bg-brand/20 font-semibold text-xs lg:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
                   >
                     <i class="ti ti-plus text-base"></i>
-                    Add Items
+                    Add Item
                   </button>
                 </div>
 

@@ -19,6 +19,7 @@ import { MindFormController } from "./mind/mind-form.controller.js";
 import { MindView } from "@/views/mind-view.js";
 import { MobileNavComponent } from "@/components/layout/mobile-nav.component.js";
 import { NavigationController } from "./navigation.controller.js";
+import { SettingsTagController } from "./settings/settings-tag.controller.js";
 import { SettingsViewComponent } from "@/components/features/settings/settings-view.component.js";
 import { eventBus } from "@/services/event-bus.service.js";
 import { renderMindList } from "@/views/mind/mind-list.renderer.js";
@@ -205,6 +206,7 @@ export const MindController = {
       "settings-view-container": SettingsViewComponent.render,
       "help-modal-container": InfoModalComponent.render,
       "edit-modals-container": EditModalsComponent.render,
+      "edit-modals-container": EditModalsComponent.render,
       "delete-modals-container": DeleteModalsComponent.render,
     };
 
@@ -317,6 +319,8 @@ export const MindController = {
     AnalyticsController.dispatchRender();
     NavigationController.updateNavigationDOM();
     MindFormController.refreshUI();
+
+    SettingsTagController.renderTagsList();
 
     this.renderCategories();
   },

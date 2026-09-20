@@ -1,6 +1,7 @@
 import { SettingsExportController } from "./settings/settings-export.controller.js";
 import { SettingsImportController } from "./settings/settings-import.controller.js";
 import { SettingsResetController } from "./settings/settings-reset.controller.js";
+import { SettingsTagController } from "./settings/settings-tag.controller.js";
 import { getTheme } from "@/services/theme.service.js";
 
 export const SettingsController = {
@@ -9,6 +10,7 @@ export const SettingsController = {
     this.bindSettingsEvents();
 
     // Initialize sub-controllers
+    SettingsTagController.init();
     SettingsImportController.init();
     SettingsResetController.init();
   },

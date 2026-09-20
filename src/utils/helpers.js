@@ -1,13 +1,3 @@
-// export const openObjectivesState = {
-//   objectivesMemory: new Map(),
-//   expandedPlanIds: new Set(),
-
-//   clear() {
-//     this.objectivesMemory.clear();
-//     this.expandedPlanIds.clear();
-//   },
-// };
-
 export function generateId() {
   if (window.crypto?.randomUUID) {
     return window.crypto.randomUUID();
@@ -56,12 +46,14 @@ export function mapTagIdsToObjects(tagIds = [], globalTags = []) {
     .filter(Boolean);
 }
 
+// utils/helpers.js
+
 export function processTagPipeline(
   componentItems = [],
   existingTags = [],
-  entityType = "notes",
+  entityType = null,
 ) {
-  const updatedGlobalTags = [...existingTags];
+  const updatedGlobalTags = existingTags.map((tag) => ({ ...tag }));
   const assignedTagIds = [];
 
   componentItems.forEach((item) => {
@@ -70,9 +62,18 @@ export function processTagPipeline(
 
     if (!itemTitle) return;
 
-    let match = updatedGlobalTags.find(
-      (t) => t.name.toLowerCase() === itemTitle.trim().toLowerCase(),
-    );
+    const normalizedTitle = itemTitle.trim().toLowerCase();
+
+    let match = null;
+    if (typeof item === "object" && item.id && !isNewFlag) {
+      match = updatedGlobalTags.find((t) => t.id === item.id);
+    }
+
+    if (!match) {
+      match = updatedGlobalTags.find(
+        (t) => t.name.toLowerCase() === normalizedTitle,
+      );
+    }
 
     if (isNewFlag && !match) {
       const newTag = {
@@ -83,9 +84,10 @@ export function processTagPipeline(
       updatedGlobalTags.push(newTag);
       assignedTagIds.push(newTag.id);
     } else if (match) {
+      if (!match.entityType && entityType) {
+        match.entityType = entityType;
+      }
       assignedTagIds.push(match.id);
-    } else if (typeof item === "object" && item.id) {
-      assignedTagIds.push(item.id);
     }
   });
 
@@ -93,6 +95,25 @@ export function processTagPipeline(
     assignedTagIds,
     updatedGlobalTags,
   };
+}
+
+export function syncTagEntityTypes(
+  tags = [],
+  entityType = null,
+  entityItems = [],
+) {
+  if (!entityType || !Array.isArray(entityItems)) return tags;
+
+  const activeTagIdsInEntity = new Set(
+    entityItems.flatMap((item) => item.tagIds || []),
+  );
+
+  return tags.map((tag) => {
+    if (tag.entityType === entityType && !activeTagIdsInEntity.has(tag.id)) {
+      return { ...tag, entityType: null };
+    }
+    return tag;
+  });
 }
 
 export function capitalize(str) {

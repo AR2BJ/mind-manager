@@ -20,13 +20,13 @@ function extractDomain(url) {
 
 /**
  * Tag Entity Normalizer
- * entityType: "notes" | "snippets" | "bookmarks" | "cheatsheets"
+ * entityType: "notes" | "snippets" | "bookmarks" | "cheatsheets" | null
  */
 export function normalizeTag(data = {}) {
   return {
     id: String(data.id || generateId()),
     name: data.name ? String(data.name).trim() : "Untitled Tag",
-    entityType: data.entityType || "notes",
+    entityType: data.entityType || null,
   };
 }
 
