@@ -161,6 +161,30 @@ export const MindActionController = {
     });
   },
 
+  handleCopyText(text) {
+    if (!text) return;
+
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        NotificationService.show({
+          type: "success",
+          message: "Value copied to clipboard",
+          icon: "ti-copy-check",
+          duration: 3000,
+        });
+      })
+      .catch((err) => {
+        console.error("Failed to copy text: ", err);
+        NotificationService.show({
+          type: "error",
+          message: "Failed to copy text",
+          icon: "ti-alert-triangle",
+          duration: 3000,
+        });
+      });
+  },
+
   bindDynamicEvents() {
     const listContainer = document.getElementById("mind-list");
     if (!listContainer) return;
@@ -204,7 +228,16 @@ export const MindActionController = {
         return;
       }
 
-      // 5. EDIT MODAL TRIGGER
+      // 5. COPY BUTTON HANDLER
+      const copyBtn = target.closest(".copy-btn");
+      if (copyBtn) {
+        e.stopPropagation();
+        const textToCopy = copyBtn.dataset.copyText;
+        if (textToCopy) this.handleCopyText(textToCopy);
+        return;
+      }
+
+      // 6. EDIT MODAL TRIGGER
       const editBtn = target.closest(".edit-btn");
       if (editBtn) {
         e.stopPropagation();
@@ -221,7 +254,7 @@ export const MindActionController = {
         return;
       }
 
-      // 6. DELETE MODAL TRIGGER
+      // 7. DELETE MODAL TRIGGER
       const deleteBtn = target.closest(".delete-btn");
       if (deleteBtn) {
         e.stopPropagation();
@@ -238,7 +271,7 @@ export const MindActionController = {
         return;
       }
 
-      // 7. DIRECT DELETE ITEM HANDLER
+      // 8. DIRECT DELETE ITEM HANDLER
       const directDeleteBtn = target.closest(".direct-delete-btn");
       if (directDeleteBtn) {
         e.stopPropagation();

@@ -14,12 +14,14 @@ import {
 
 import { AutocompleteComponent } from "@/components/ui/autocomplete.component.js";
 import { ComboboxComponent } from "@/components/ui/combobox.component.js";
+import { EditModalsComponent } from "@/components/modals/edit-modals.component";
 import { GlobalLoaderService } from "@/services/loader.service.js";
 import { MindService } from "@/services/mind.service.js";
 import { NotificationService } from "@/services/notification.service.js";
 
 let pendingDeleteId = null;
 let pendingEditId = null;
+let editingItemId = null;
 
 // Temporary state for CheatSheet Items inside Edit Modal
 let activeModalCheatSheetItems = [];
@@ -64,6 +66,7 @@ export const MindFormController = {
     this.setupCreateAutocompletes();
     this.setupCreateTagComboboxes();
     this.bindFormEvents();
+    this.bindCheatsheetItemEvents();
     this.bindAccordionEvents();
   },
 
@@ -283,7 +286,6 @@ export const MindFormController = {
     }
   },
 
-  // Add this method inside MindFormController in mind-form.controller_6.js
   bindAccordionEvents() {
     const accordionGroup = document.getElementById("edit-accordion-group");
     if (!accordionGroup) return;
@@ -347,59 +349,198 @@ export const MindFormController = {
     });
   },
 
-  // Renders items inside Accordion 3 for CheatSheet
-  renderCheatSheetItemsList() {
-    const container = document.getElementById(
-      "edit-cheatsheet-items-container",
-    );
+  renderModalCheatsheetItems() {
+    const container = document.getElementById("cheatsheet-items-list");
     if (!container) return;
 
-    if (
-      !activeModalCheatSheetItems ||
-      activeModalCheatSheetItems.length === 0
-    ) {
-      container.innerHTML = `
-        <div class="p-4 border border-dashed border-border rounded-xl text-center text-xs text-secondary">
-          No items added yet. Use the form above to add shortcuts or key-values.
-        </div>
-      `;
+    const total = activeModalCheatSheetItems.length;
+
+    if (total === 0) {
+      container.innerHTML = EditModalsComponent.renderEmptyState(
+        "No items defined yet.",
+        "ti ti-table",
+      );
       return;
     }
 
-    container.innerHTML = activeModalCheatSheetItems
-      .map(
-        (item, index) => `
-        <div class="flex items-center justify-between p-2.5 rounded-xl border border-border bg-surface text-xs gap-2">
-          <div class="flex items-center gap-2 min-w-0 flex-1">
-            <span class="font-mono font-semibold text-brand bg-brand/10 px-2 py-0.5 rounded text-[11px] shrink-0 truncate max-w-xs">
-              ${item.key}
-            </span>
-            <span class="text-color truncate">${item.value}</span>
-            ${
-              item.description
-                ? `<span class="text-secondary text-[11px] truncate ps-1 border-s border-border">${item.description}</span>`
-                : ""
-            }
-          </div>
-          <button
-            type="button"
-            data-index="${index}"
-            class="btn-remove-cs-item text-secondary hover:text-red-500 transition p-1 rounded-lg hover:bg-surface-2 shrink-0 cursor-pointer"
-          >
-            <i class="ti ti-trash text-base"></i>
-          </button>
-        </div>
-      `,
-      )
-      .join("");
+    container.innerHTML = `
+      <div
+        class="w-full h-full max-h-30 sm:max-h-25 lg:max-h-23 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-border/60 p-2.5 flex flex-col justify-start gap-2.5"
+      >
+        ${activeModalCheatSheetItems
+          .map((item) => EditModalsComponent.renderCheatsheetItems(item))
+          .join("")}
+      </div>
+    `;
+  },
 
-    container.querySelectorAll(".btn-remove-cs-item").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        const idx = Number(e.currentTarget.getAttribute("data-index"));
-        activeModalCheatSheetItems.splice(idx, 1);
-        this.renderCheatSheetItemsList();
+  handleSaveItem() {
+    const keyInput = document.getElementById("new-cs-item-key");
+    const valInput = document.getElementById("new-cs-item-val");
+    const descInput = document.getElementById("new-cs-item-desc");
+
+    if (!keyInput || !valInput) return;
+
+    const key = keyInput?.value.trim();
+    const value = valInput?.value.trim();
+    const description = descInput?.value.trim();
+
+    if (!key || !value) {
+      NotificationService.show({
+        type: "warning",
+        message: "Items key or value is required",
+        icon: "ti-alert-triangle",
       });
+      return;
+    }
+
+    if (editingItemId) {
+      const targetItem = activeModalCheatSheetItems.find(
+        (i) => i.id === editingItemId,
+      );
+      if (targetItem) {
+        targetItem.key = key;
+        targetItem.value = value;
+        targetItem.description = description;
+      }
+    } else {
+      activeModalCheatSheetItems.push({
+        id: generateId(),
+        key,
+        value,
+        description,
+      });
+    }
+
+    this.resetItemFormState();
+    this.renderModalCheatsheetItems();
+  },
+
+  bindCheatsheetItemEvents() {
+    const container = document.getElementById("cheatsheet-items-list");
+    const keyInput = document.getElementById("new-cs-item-key");
+    const valInput = document.getElementById("new-cs-item-val");
+    const descInput = document.getElementById("new-cs-item-desc");
+    const actionsContainer = document.getElementById("cs-form-actions");
+
+    keyInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        this.handleSaveItem();
+      }
     });
+
+    valInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        this.handleSaveItem();
+      }
+    });
+
+    actionsContainer?.addEventListener("click", (e) => {
+      const addBtn = e.target.closest("#btn-add-cheatsheet-item");
+      const saveBtn = e.target.closest("#btn-save-cheatsheet-item");
+      const cancelBtn = e.target.closest("#btn-cancel-cheatsheet-item");
+
+      if (addBtn || saveBtn) {
+        e.preventDefault();
+        this.handleSaveItem();
+      } else if (cancelBtn) {
+        e.preventDefault();
+        this.resetItemFormState();
+      }
+    });
+
+    container?.addEventListener("click", (e) => {
+      const target = e.target.closest("[data-action]");
+      if (!target) return;
+
+      const itemId = target.dataset.itemId;
+      if (!itemId) return;
+
+      const action = target.dataset.action;
+
+      if (action === "delete-item") {
+        const targetIndex = activeModalCheatSheetItems.findIndex(
+          (i) => i.id === itemId,
+        );
+        if (targetIndex === -1) return;
+
+        const deletedItem = activeModalCheatSheetItems[targetIndex];
+        activeModalCheatSheetItems.splice(targetIndex, 1);
+
+        if (editingItemId === itemId) this.resetItemFormState();
+        this.renderModalCheatsheetItems();
+
+        NotificationService.show({
+          type: "error",
+          message: `Item deleted`,
+          icon: "ti-trash",
+          duration: 5000,
+          undoAction: () => {
+            activeModalCheatSheetItems.splice(targetIndex, 0, deletedItem);
+            this.renderModalCheatsheetItems();
+          },
+        });
+      } else if (action === "edit-item") {
+        const item = activeModalCheatSheetItems.find((i) => i.id === itemId);
+        if (!item) return;
+
+        editingItemId = item.id;
+
+        if (keyInput) keyInput.value = item.key;
+        if (valInput) valInput.value = item.value;
+        if (descInput) descInput.value = item.description;
+
+        if (actionsContainer) {
+          actionsContainer.innerHTML = `
+          <div class="grid grid-cols-2 gap-2 w-full">
+            <button
+              id="btn-cancel-cheatsheet-item"
+              type="button"
+              class="h-10 rounded-xl bg-surface-2 border border-border text-secondary hover:text-color font-semibold text-xs lg:text-sm flex items-center justify-center transition cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              id="btn-save-cheatsheet-item"
+              type="button"
+              class="h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600/30 font-semibold text-xs lg:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
+            >
+              <i class="ti ti-device-floppy"></i> Save Item
+            </button>
+          </div>
+        `;
+        }
+
+        keyInput?.focus();
+      }
+    });
+  },
+
+  resetItemFormState() {
+    editingItemId = null;
+    const keyInput = document.getElementById("new-cs-item-key");
+    const valInput = document.getElementById("new-cs-item-val");
+    const descInput = document.getElementById("new-cs-item-desc");
+    const actionsContainer = document.getElementById("cs-form-actions");
+
+    if (keyInput) keyInput.value = "";
+    if (valInput) valInput.value = "";
+    if (descInput) descInput.value = "";
+
+    if (actionsContainer) {
+      actionsContainer.innerHTML = `
+        <button
+          id="btn-add-cheatsheet-item"
+          type="button"
+          class="w-full h-10 rounded-xl bg-brand/10 text-brand/80 hover:bg-brand/20 font-semibold text-xs lg:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
+        >
+          <i class="ti ti-plus text-base"></i>
+          Add Items
+        </button>
+      `;
+    }
   },
 
   populateEditModal(itemId) {
@@ -602,11 +743,10 @@ export const MindFormController = {
       if (descInput) descInput.value = currentItem.description || "";
       if (pinnedCheckbox) pinnedCheckbox.checked = !!currentItem.pinned;
 
-      // Deep copy existing items to avoid mutating state before save
-      activeModalCheatSheetItems = (currentItem.items || []).map((i) => ({
-        ...i,
-      }));
-      this.renderCheatSheetItemsList();
+      activeModalCheatSheetItems = JSON.parse(
+        JSON.stringify(currentItem.items || []),
+      );
+      this.renderModalCheatsheetItems();
 
       const editCheatCatContainer = document.getElementById(
         "edit-cheatsheet-category-autocomplete",
@@ -657,43 +797,6 @@ export const MindFormController = {
 
     const titleInput = document.getElementById("create-item-title");
     const addBtn = document.getElementById("add-plan-btn");
-
-    // CheatSheet Items Add Event in Modal
-    const addCsItemBtn = document.getElementById("btn-add-cheatsheet-item");
-    if (addCsItemBtn) {
-      addCsItemBtn.addEventListener("click", () => {
-        const keyInput = document.getElementById("edit-cs-item-key");
-        const valInput = document.getElementById("edit-cs-item-val");
-        const descInput = document.getElementById("edit-cs-item-desc");
-
-        const key = keyInput?.value.trim();
-        const value = valInput?.value.trim();
-        const description = descInput?.value.trim();
-
-        if (!key || !value) {
-          NotificationService.show({
-            type: "error",
-            message: "Key and Value are required for CheatSheet items",
-            icon: "ti-alert-triangle",
-            duration: 4000,
-          });
-          return;
-        }
-
-        activeModalCheatSheetItems.push({
-          id: generateId(),
-          key,
-          value,
-          description,
-        });
-
-        if (keyInput) keyInput.value = "";
-        if (valInput) valInput.value = "";
-        if (descInput) descInput.value = "";
-
-        this.renderCheatSheetItemsList();
-      });
-    }
 
     const handleCreateItem = () => {
       const activeTab = StateManager.getActiveTab() || "notes";
@@ -771,7 +874,7 @@ export const MindFormController = {
               "snippets",
             );
 
-            if (!title && !code) {
+            if (!title || !code) {
               NotificationService.show({
                 type: "error",
                 message: "Snippet title or code cannot be empty",
@@ -822,7 +925,7 @@ export const MindFormController = {
               "bookmarks",
             );
 
-            if (!title && !url) {
+            if (!title || !url) {
               NotificationService.show({
                 type: "error",
                 message: "Bookmark title or URL cannot be empty",

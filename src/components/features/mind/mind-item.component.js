@@ -363,7 +363,7 @@ export const MindItemComponent = {
     return `
       <div
         data-id="${cheatSheet.id}"
-        class="cheatsheet-item group relative flex flex-col justify-between gap-3 p-4 rounded-xl bg-surface-2/40 hover:bg-surface-2/60 transition-all border border-border/40"
+        class="cheatsheet-item group relative flex flex-col justify-between gap-3 p-4 lg:p-5 rounded-2xl bg-surface-2/40 hover:bg-surface-2/60 transition-all border border-border/40 shadow-xs"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="flex flex-col min-w-0 w-full gap-1.5">
@@ -383,7 +383,7 @@ export const MindItemComponent = {
               ${tagIdsHtml}
             </div>
 
-            <h3 class="text-base font-bold mt-1 text-color wrap-break-word">
+            <h3 class="text-base lg:text-lg font-bold mt-1 text-color wrap-break-word">
               ${cheatSheet.title || "Untitled CheatSheet"}
             </h3>
 
@@ -400,19 +400,51 @@ export const MindItemComponent = {
         ${
           items.length > 0
             ? `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 mt-2">
                   ${items
                     .map(
                       (it) => `
                       <div
-                        class="flex items-center justify-between gap-2 p-2 rounded-lg bg-surface/80 border border-border/40 text-xs"
+                        class="group/item flex items-center justify-between gap-3 p-2.5 rounded-xl bg-surface/90 hover:bg-surface border border-border/50 hover:border-brand/40 transition-all shadow-2xs"
                       >
-                        <span class="font-bold text-color/90 truncate"
-                          >${it.key}</span
-                        >
-                        <span class="font-mono text-secondary truncate"
-                          >${it.value}</span
-                        >
+                        <div class="flex flex-col min-w-0 flex-1 gap-1">
+                          <div class="flex items-center gap-2">
+                            <code class="font-mono text-xs font-semibold text-brand bg-brand/10 border border-brand/20 px-2 py-0.5 rounded-md truncate max-w-full">
+                              ${it.key || "-"}
+                            </code>
+                          </div>
+                          ${
+                            it.description
+                              ? `<span class="text-[11px] text-secondary/80 truncate ps-0.5">${it.description}</span>`
+                              : ""
+                          }
+                        </div>
+
+                        ${
+                          it.value
+                            ? `
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                  <span
+                                    class="font-mono text-xs bg-surface-2 text-color/90 border border-border/60 px-2 py-1 rounded-lg select-all"
+                                  >
+                                    ${it.value}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    data-copy-text="${
+                                      it.value
+                                        ? it.value.replace(/"/g, "&quot;")
+                                        : ""
+                                    }"
+                                    class="copy-btn w-7 h-7 rounded-lg bg-surface-2 hover:bg-brand/10 hover:text-brand text-secondary border border-border/50 flex items-center justify-center transition cursor-pointer shrink-0"
+                                    title="Copy value"
+                                  >
+                                    <i class="ti ti-copy text-xs"></i>
+                                  </button>
+                                </div>
+                              `
+                            : ""
+                        }
                       </div>
                     `,
                     )
@@ -423,11 +455,15 @@ export const MindItemComponent = {
         }
 
         <div
-          class="pt-2 border-t border-border/40 flex items-center justify-between text-[11px] text-muted"
+          class="pt-2.5 border-t border-border/40 flex items-center justify-between text-[11px] text-muted mt-1"
         >
           <span class="flex items-center gap-1.5">
             <i class="ti ti-calendar-time text-sm pb-0.5"></i>
             ${cheatSheet.createdAt || "Recently"}
+          </span>
+          <span class="flex items-center gap-1 font-medium text-secondary">
+            <i class="ti ti-list-check text-xs"></i>
+            ${items.length} items
           </span>
         </div>
       </div>

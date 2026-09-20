@@ -762,7 +762,7 @@ export const MindController = {
       targetBtn.offsetWidth || targetBtn.getBoundingClientRect().width;
     if (!buttonWidth) return;
 
-    const isWide = window.matchMedia("(min-width: 375px)").matches;
+    const isWide = window.matchMedia("(min-width: 640px)").matches;
 
     if (isWide) {
       let offsetLeft = 4;

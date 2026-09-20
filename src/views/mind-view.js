@@ -9,17 +9,17 @@ export const MindView = {
           class="mb-6 flex flex-wrap sm:flex-nowrap gap-4 justify-center sm:justify-between items-center w-full"
         >
           <div
-            class="relative flex flex-col w-full justify-center rounded-xl border border-border bg-surface p-1 xs:flex-row xs:w-fit xs:justify-start"
+            class="relative flex flex-col w-full justify-center rounded-xl border border-border bg-surface p-1 sm:flex-row sm:w-fit sm:justify-start"
           >
             <div
               id="tab-indicator"
-              class="absolute top-1 left-1 h-12 w-[calc(100%-8px)] rounded-lg bg-brand/80 transition-all duration-300 xs:h-[calc(100%-8px)] xs:w-27"
+              class="absolute top-1 left-1 h-12 w-[calc(100%-8px)] rounded-lg bg-brand/80 transition-all duration-300 sm:h-[calc(100%-8px)] sm:w-27"
             ></div>
 
             <button
               id="tab-notes"
               data-tab="notes"
-              class="relative z-10 flex-1 w-full rounded-t-xl py-2 text-sm font-medium text-(--color-btn-primary-text) transition cursor-pointer text-center xs:w-27 xs:rounded-l-xl xs:rounded-tr-none"
+              class="relative z-10 flex-1 w-full rounded-t-xl py-2 text-sm font-medium text-(--color-btn-primary-text) transition cursor-pointer text-center sm:w-27 sm:rounded-l-xl sm:rounded-tr-none"
             >
               Notes
             </button>
@@ -27,7 +27,7 @@ export const MindView = {
             <button
               id="tab-snippets"
               data-tab="snippets"
-              class="relative z-10 flex-1 w-full rounded-none py-2 text-sm font-medium text-secondary transition cursor-pointer text-center xs:w-27"
+              class="relative z-10 flex-1 w-full rounded-none py-2 text-sm font-medium text-secondary transition cursor-pointer text-center sm:w-27"
             >
               Snippets
             </button>
@@ -35,7 +35,7 @@ export const MindView = {
             <button
               id="tab-bookmarks"
               data-tab="bookmarks"
-              class="relative z-10 flex-1 w-full rounded-none py-2 text-sm font-medium text-secondary transition cursor-pointer text-center xs:w-27"
+              class="relative z-10 flex-1 w-full rounded-none py-2 text-sm font-medium text-secondary transition cursor-pointer text-center sm:w-27"
             >
               Bookmarks
             </button>
@@ -43,7 +43,7 @@ export const MindView = {
             <button
               id="tab-cheatsheets"
               data-tab="cheatsheets"
-              class="relative z-10 flex-1 w-full rounded-b-xl py-2 text-sm font-medium text-secondary transition cursor-pointer text-center xs:w-27 xs:rounded-r-xl xs:rounded-t-none"
+              class="relative z-10 flex-1 w-full rounded-b-xl py-2 text-sm font-medium text-secondary transition cursor-pointer text-center sm:w-27 sm:rounded-r-xl sm:rounded-t-none"
             >
               CheatSheets
             </button>
@@ -59,7 +59,7 @@ export const MindView = {
               type="text"
               id="search-mind"
               placeholder="Search items..."
-              class="w-full ps-10 pe-10 py-2.5 text-sm rounded-xl border border-border bg-surface text-color placeholder:text-muted/70 focus:outline-none focus:border-brand/50 transition-all shadow-sm"
+              class="w-full ps-10 pe-10 py-3 text-sm rounded-xl border border-border bg-surface text-color placeholder:text-muted/70 focus:outline-none focus:border-brand/50 transition-all shadow-sm"
             />
 
             <div
@@ -75,7 +75,7 @@ export const MindView = {
 
               <kbd class="flex items-center pointer-events-none">
                 <span
-                  class="px-1.25 py-1 text-[10px] bg-surface-2 border border-border text-muted rounded-md shadow-2xs flex flex-row justify-center items-center"
+                  class="px-1.5 py-1.25 text-xs bg-surface-2 border border-border text-muted rounded-md shadow-2xs flex flex-row justify-center items-center"
                   ><i class="ti ti-slash"></i
                 ></span>
               </kbd>
@@ -148,13 +148,13 @@ export const MindView = {
                   >
                   <textarea
                     id="create-note-content"
-                    rows="3"
+                    rows="2"
                     placeholder="Write your note content here..."
                     class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
                   ></textarea>
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-end gap-4 w-full">
+                <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full">
                   <div
                     id="create-note-category-autocomplete"
                     class="flex-1 w-full min-w-0"
@@ -195,12 +195,12 @@ export const MindView = {
                     class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
                     >Description</label
                   >
-                  <input
+                  <textarea
                     id="create-snippet-desc"
-                    type="text"
+                    rows="2"
                     placeholder="Short description..."
-                    class="h-11 w-full rounded-xl border border-border bg-surface-2 px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
-                  />
+                    class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
+                  ></textarea>
                 </div>
 
                 <div class="flex flex-col">
@@ -213,11 +213,11 @@ export const MindView = {
                     id="create-snippet-code"
                     rows="4"
                     placeholder="Paste your code snippet here..."
-                    class="w-full font-mono text-xs scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
+                    class="w-full font-mono text-sm scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
                   ></textarea>
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-end gap-4 w-full">
+                <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full">
                   <div
                     id="create-snippet-category-autocomplete"
                     class="flex-1 w-full min-w-0"
@@ -286,7 +286,7 @@ export const MindView = {
                   ></textarea>
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-end gap-4 w-full">
+                <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full">
                   <div
                     id="create-bookmark-tags-combobox"
                     class="flex-1 w-full min-w-0"
@@ -317,27 +317,25 @@ export const MindView = {
                 class="mind-tab-fields hidden flex-col gap-4"
                 data-tab-fields="cheatsheets"
               >
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div class="flex flex-col">
-                    <label
-                      for="create-cheatsheet-desc"
-                      class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                      >Description</label
-                    >
-                    <input
-                      id="create-cheatsheet-desc"
-                      type="text"
-                      placeholder="CheatSheet description..."
-                      class="h-11 w-full rounded-xl border border-border bg-surface-2 px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
-                    />
-                  </div>
-                  <div
-                    id="create-cheatsheet-category-autocomplete"
-                    class="w-full"
-                  ></div>
+                <div class="flex flex-col">
+                  <label
+                    for="create-cheatsheet-desc"
+                    class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
+                    >Description</label
+                  >
+                  <textarea
+                    id="create-cheatsheet-desc"
+                    rows="2"
+                    placeholder="CheatSheet description..."
+                    class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
+                  ></textarea>
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-end gap-4 w-full">
+                <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full">
+                  <div
+                    id="create-cheatsheet-category-autocomplete"
+                    class="flex-1 w-full min-w-0"
+                  ></div>
                   <div
                     id="create-cheatsheet-tags-combobox"
                     class="flex-1 w-full min-w-0"
@@ -441,7 +439,7 @@ export const MindView = {
 
             <div
               id="mind-count-badge"
-              class="shrink-0 flex justify-center items-center gap-1.5 px-4 py-1.5 bg-surface-3 rounded-xl text-xs font-bold text-color select-none"
+              class="shrink-0 flex justify-center items-center gap-1.5 px-4 py-1.5 bg-surface-3 rounded-xl text-xs font-bold text-color select-none w-full sm:w-36 lg:w-auto"
             >
               0 Items
             </div>

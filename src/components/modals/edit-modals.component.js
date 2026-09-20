@@ -14,14 +14,57 @@ export const EditModalsComponent = {
     `;
   },
 
+  renderCheatsheetItems(item) {
+    return `
+      <div
+        data-item-id="${item.id}"
+        class="item-item flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface-2 p-2.5 shadow-xs transition hover:border-border"
+      >
+        <div class="flex flex-wrap items-center flex-1 min-w-0 gap-2">
+          <span class="ps-2 text-xs lg:text-sm font-medium text-brand truncate">
+            ${(item.key ?? "").replace(/"/g, "&quot;")}:
+          </span>
+          <span class="text-color truncate">${item.value}</span>
+          ${
+            item.description
+              ? `<span class="h-6 text-secondary text-xs lg:text-sm truncate ps-2 border-s border-border flex justify-center items-center">${item.description}</span>`
+              : ""
+          }
+        </div>
+
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            data-action="edit-item"
+            data-item-id="${item.id}"
+            class="edit-btn h-7 w-7 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-blue-600/10 hover:cursor-pointer transition"
+            title="Edit Item"
+          >
+            <i class="ti ti-edit-circle text-blue-500/80 text-sm lg:text-base"></i>
+          </button>
+
+          <button
+            type="button"
+            data-action="delete-item"
+            data-item-id="${item.id}"
+            class="delete-btn flex h-7 w-7 sm:w-9 sm:h-9 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-red-600/10 hover:cursor-pointer transition"
+            title="Delete Item"
+          >
+            <i class="ti ti-trash text-red-500/80 text-sm lg:text-base"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  },
+
   render() {
     return `
       <div
         id="edit-modal"
-        class="fixed inset-0 z-50 hidden items-end lg:items-center justify-center p-0 lg:p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+        class="fixed inset-0 z-400 hidden items-center justify-center p-0 xs:p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
       >
         <div
-          class="bg-surface xs:rounded-t-3xl lg:rounded-2xl p-4 lg:p-6 max-w-3xl w-full h-dvh xs:h-[96.5dvh] sm:h-[95dvh] lg:h-auto lg:max-h-[90vh] shadow-2xl flex flex-col border border-border overflow-hidden"
+          class="bg-surface rounded-2xl p-4 xs:p-6 max-w-3xl w-full h-auto shadow-2xl flex flex-col border border-border overflow-hidden"
         >
           <div
             class="flex items-center justify-between border-b border-border pb-4 shrink-0"
@@ -100,7 +143,7 @@ export const EditModalsComponent = {
                     id="edit-item-title"
                     type="text"
                     placeholder="Enter title..."
-                    class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
+                    class="h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
                   />
                 </div>
 
@@ -117,7 +160,7 @@ export const EditModalsComponent = {
                     >
                     <textarea
                       id="edit-note-content"
-                      rows="4"
+                      rows="3"
                       placeholder="Note content..."
                       class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface p-3 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none resize-none"
                     ></textarea>
@@ -135,12 +178,11 @@ export const EditModalsComponent = {
                       class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
                       >Description</label
                     >
-                    <input
+                    <textarea
                       id="edit-snippet-desc"
-                      type="text"
-                      placeholder="Short description..."
-                      class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
-                    />
+                      rows="2"                      placeholder="Short description..."
+                      class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
+                    ></textarea>
                   </div>
 
                   <div class="flex flex-col">
@@ -151,7 +193,7 @@ export const EditModalsComponent = {
                     >
                     <textarea
                       id="edit-snippet-code"
-                      rows="4"
+                      rows="3"
                       placeholder="Paste code..."
                       class="w-full font-mono text-xs scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface p-3 text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none resize-none"
                     ></textarea>
@@ -173,7 +215,7 @@ export const EditModalsComponent = {
                       id="edit-bookmark-url"
                       type="url"
                       placeholder="https://example.com"
-                      class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                      class="h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
                     />
                   </div>
 
@@ -203,12 +245,12 @@ export const EditModalsComponent = {
                       class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
                       >Description</label
                     >
-                    <input
+                    <textarea
                       id="edit-cheatsheet-desc"
-                      type="text"
+                      rows="2"
                       placeholder="Description..."
-                      class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
-                    />
+                      class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
+                    ></textarea>
                   </div>
                 </div>
               </div>
@@ -421,67 +463,61 @@ export const EditModalsComponent = {
                 ></i>
               </button>
 
-              <div class="accordion-content p-3.5 lg:p-4 flex flex-col gap-4">
-                <div
-                  class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end bg-surface p-3 rounded-xl border border-border/80"
-                >
-                  <div class="sm:col-span-4 flex flex-col">
-                    <label
-                      class="mb-1 block ps-1 text-[11px] font-semibold text-secondary"
-                      >Key / Command</label
-                    >
+              <div class="accordion-content p-3.5 lg:p-4">
+                <div class="w-full grid grid-cols-1 xs:grid-cols-2 gap-2">
+                  <div class="flex-1 min-w-0">
                     <input
-                      id="edit-cs-item-key"
+                      id="new-cs-item-key"
                       type="text"
-                      placeholder="e.g. git commit"
-                      class="h-9 w-full rounded-lg border border-border bg-surface-2 px-3 text-xs text-color placeholder:text-secondary/60 focus:border-brand/80 focus:outline-none"
+                      placeholder="Key / Command (e.g. git commit)..."
+                      class="w-full h-11 rounded-xl border border-border bg-surface px-3 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
                     />
                   </div>
-                  <div class="sm:col-span-4 flex flex-col">
-                    <label
-                      class="mb-1 block ps-1 text-[11px] font-semibold text-secondary"
-                      >Value / Shortcut</label
-                    >
+
+                  <div class="flex-1 min-w-0">
                     <input
-                      id="edit-cs-item-val"
+                      id="new-cs-item-val"
                       type="text"
-                      placeholder="e.g. -m 'msg'"
-                      class="h-9 w-full rounded-lg border border-border bg-surface-2 px-3 text-xs text-color placeholder:text-secondary/60 focus:border-brand/80 focus:outline-none"
+                      placeholder="Value / Shortcut (e.g. -m 'msg')..."
+                      class="w-full h-11 rounded-xl border border-border bg-surface px-3 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
                     />
                   </div>
-                  <div class="sm:col-span-4 flex gap-2">
-                    <div class="flex-1 flex flex-col">
-                      <label
-                        class="mb-1 block ps-1 text-[11px] font-semibold text-secondary"
-                        >Description</label
-                      >
-                      <input
-                        id="edit-cs-item-desc"
-                        type="text"
-                        placeholder="Optional..."
-                        class="h-9 w-full rounded-lg border border-border bg-surface-2 px-3 text-xs text-color placeholder:text-secondary/60 focus:border-brand/80 focus:outline-none"
-                      />
-                    </div>
-                    <button
-                      id="btn-add-cheatsheet-item"
-                      type="button"
-                      class="h-9 px-3 self-end rounded-lg bg-brand text-white text-xs font-medium hover:bg-brand/90 transition flex items-center justify-center shrink-0 cursor-pointer"
-                    >
-                      <i class="ti ti-plus text-base"></i>
-                    </button>
+                </div>
+
+                <div class="flex items-center gap-2 w-full mt-2">
+                  <div class="flex-1 min-w-0 flex">
+                    <textarea
+                      id="new-cs-item-desc"
+                      rows="1"
+                      placeholder="Enter description..."
+                      class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
+                    ></textarea>
                   </div>
                 </div>
 
                 <div
-                  id="edit-cheatsheet-items-container"
-                  class="flex flex-col gap-2 max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-surface-2 pe-1"
+                  id="cs-form-actions"
+                  class="w-full mt-3.5"
                 >
+                  <button
+                    id="btn-add-cheatsheet-item"
+                    type="button"
+                    class="w-full h-10 rounded-xl bg-brand/10 text-brand/80 hover:bg-brand/20 font-semibold text-xs lg:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  >
+                    <i class="ti ti-plus text-base"></i>
+                    Add Items
+                  </button>
                 </div>
+
+                <div
+                  id="cheatsheet-items-list"
+                  class="w-full flex flex-col gap-2 mt-3.5"
+                ></div>
               </div>
             </div>
 
             <div
-              class="grid grid-cols-2 gap-3 pt-3 border-t border-border shrink-0 w-full bg-surface mt-auto"
+              class="grid grid-cols-2 gap-3 pt-3 border-t border-border shrink-0 w-full bg-surface"
             >
               <button
                 id="cancel-edit"
