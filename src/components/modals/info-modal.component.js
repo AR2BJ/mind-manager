@@ -57,7 +57,6 @@ export const InfoModalComponent = {
   renderFeatureGuideData() {
     return `
       <div class="space-y-3">
-        <!-- 1. Objectives & Progress Tracking -->
         <div class="p-3.5 bg-surface-2 border border-border rounded-2xl">
           <h4
             class="text-xs font-bold text-brand uppercase tracking-wider flex items-center gap-1 mb-1.5"
@@ -69,7 +68,6 @@ export const InfoModalComponent = {
           </p>
         </div>
 
-        <!-- 2. Execution Logs & Timeline -->
         <div class="p-3.5 bg-surface-2 border border-border rounded-2xl">
           <h4
             class="text-xs font-bold text-blue-500/90 uppercase tracking-wider flex items-center gap-1 mb-1.5"
@@ -81,7 +79,6 @@ export const InfoModalComponent = {
           </p>
         </div>
 
-        <!-- 3. Reusable Templates (Baseline vs Optimal) -->
         <div class="p-3.5 bg-surface-2 border border-border rounded-2xl">
           <h4
             class="text-xs font-bold text-emerald-500/90 uppercase tracking-wider flex items-center gap-1 mb-1.5"
@@ -93,7 +90,6 @@ export const InfoModalComponent = {
           </p>
         </div>
 
-        <!-- 4. Deep Analytics & Heatmaps -->
         <div class="p-3.5 bg-surface-2 border border-border rounded-2xl">
           <h4
             class="text-xs font-bold text-purple-500/90 uppercase tracking-wider flex items-center gap-1 mb-1.5"
@@ -105,7 +101,6 @@ export const InfoModalComponent = {
           </p>
         </div>
 
-        <!-- 5. Fast Category Filter -->
         <div class="p-3.5 bg-surface-2 border border-border rounded-2xl">
           <h4
             class="text-xs font-bold text-amber-500/90 uppercase tracking-wider flex items-center gap-1 mb-1.5"
@@ -117,7 +112,6 @@ export const InfoModalComponent = {
           </p>
         </div>
 
-        <!-- 6. Data Security & Storage Management -->
         <div class="p-3.5 bg-surface-2 border border-border rounded-2xl">
           <h4
             class="text-xs font-bold text-rose-500/90 uppercase tracking-wider flex items-center gap-1 mb-1.5"

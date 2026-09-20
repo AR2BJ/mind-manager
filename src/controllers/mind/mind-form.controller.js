@@ -7,6 +7,7 @@ import {
 import { StateManager, state } from "@/models/state.model.js";
 import {
   capitalize,
+  generateId,
   mapTagIdsToObjects,
   processTagPipeline,
 } from "@/utils/helpers";
@@ -19,6 +20,9 @@ import { NotificationService } from "@/services/notification.service.js";
 
 let pendingDeleteId = null;
 let pendingEditId = null;
+
+// Temporary state for CheatSheet Items inside Edit Modal
+let activeModalCheatSheetItems = [];
 
 // Category Autocompletes
 let createNoteCategoryAutocomplete = null;
@@ -60,6 +64,7 @@ export const MindFormController = {
     this.setupCreateAutocompletes();
     this.setupCreateTagComboboxes();
     this.bindFormEvents();
+    this.bindAccordionEvents();
   },
 
   refreshUI() {
@@ -278,10 +283,130 @@ export const MindFormController = {
     }
   },
 
+  // Add this method inside MindFormController in mind-form.controller_6.js
+  bindAccordionEvents() {
+    const accordionGroup = document.getElementById("edit-accordion-group");
+    if (!accordionGroup) return;
+
+    accordionGroup.addEventListener("click", (e) => {
+      const header = e.target.closest(".accordion-header");
+      if (!header) return;
+
+      const currentItem = header.closest(".accordion-item");
+      const currentContent = currentItem.querySelector(".accordion-content");
+
+      // If already active/open, prevent closing it
+      if (!currentContent.classList.contains("hidden")) return;
+
+      const allItems = accordionGroup.querySelectorAll(".accordion-item");
+      const currentIndex = Array.from(allItems).indexOf(currentItem);
+
+      allItems.forEach((item, index) => {
+        const content = item.querySelector(".accordion-content");
+        const icon = item.querySelector(".accordion-icon");
+        const itemHeader = item.querySelector(".accordion-header");
+
+        if (index === currentIndex) {
+          content.classList.remove("hidden");
+        } else {
+          content.classList.add("hidden");
+        }
+
+        itemHeader?.classList.toggle("border-b", index === currentIndex);
+        icon?.classList.toggle("fa-chevron-up", index === currentIndex);
+        icon?.classList.toggle("fa-chevron-down", index !== currentIndex);
+      });
+    });
+  },
+
+  resetAccordionToFirstItem() {
+    const accordionGroup = document.getElementById("edit-accordion-group");
+    if (!accordionGroup) return;
+
+    const items = accordionGroup.querySelectorAll(".accordion-item");
+    items.forEach((item, index) => {
+      const header = item.querySelector(".accordion-header");
+      const content = item.querySelector(".accordion-content");
+      const icon = item.querySelector(".accordion-icon");
+
+      if (index === 0) {
+        content.classList.remove("hidden");
+        header?.classList.add("border-b");
+        if (icon) {
+          icon.classList.remove("fa-chevron-down");
+          icon.classList.add("fa-chevron-up");
+        }
+      } else {
+        content.classList.add("hidden");
+        header?.classList.remove("border-b");
+        if (icon) {
+          icon.classList.remove("fa-chevron-up");
+          icon.classList.add("fa-chevron-down");
+        }
+      }
+    });
+  },
+
+  // Renders items inside Accordion 3 for CheatSheet
+  renderCheatSheetItemsList() {
+    const container = document.getElementById(
+      "edit-cheatsheet-items-container",
+    );
+    if (!container) return;
+
+    if (
+      !activeModalCheatSheetItems ||
+      activeModalCheatSheetItems.length === 0
+    ) {
+      container.innerHTML = `
+        <div class="p-4 border border-dashed border-border rounded-xl text-center text-xs text-secondary">
+          No items added yet. Use the form above to add shortcuts or key-values.
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = activeModalCheatSheetItems
+      .map(
+        (item, index) => `
+        <div class="flex items-center justify-between p-2.5 rounded-xl border border-border bg-surface text-xs gap-2">
+          <div class="flex items-center gap-2 min-w-0 flex-1">
+            <span class="font-mono font-semibold text-brand bg-brand/10 px-2 py-0.5 rounded text-[11px] shrink-0 truncate max-w-xs">
+              ${item.key}
+            </span>
+            <span class="text-color truncate">${item.value}</span>
+            ${
+              item.description
+                ? `<span class="text-secondary text-[11px] truncate ps-1 border-s border-border">${item.description}</span>`
+                : ""
+            }
+          </div>
+          <button
+            type="button"
+            data-index="${index}"
+            class="btn-remove-cs-item text-secondary hover:text-red-500 transition p-1 rounded-lg hover:bg-surface-2 shrink-0 cursor-pointer"
+          >
+            <i class="ti ti-trash text-base"></i>
+          </button>
+        </div>
+      `,
+      )
+      .join("");
+
+    container.querySelectorAll(".btn-remove-cs-item").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const idx = Number(e.currentTarget.getAttribute("data-index"));
+        activeModalCheatSheetItems.splice(idx, 1);
+        this.renderCheatSheetItemsList();
+      });
+    });
+  },
+
   populateEditModal(itemId) {
     this.toggleFormTabFields();
+    this.resetAccordionToFirstItem();
 
-    // Destroy existing Category Autocompletes
+    // Destroy existing autocompletes/comboboxes
     if (editNoteCategoryAutocomplete) editNoteCategoryAutocomplete.destroy();
     if (editSnippetCategoryAutocomplete)
       editSnippetCategoryAutocomplete.destroy();
@@ -343,6 +468,7 @@ export const MindFormController = {
             label: "Category",
             itemTitle: "name",
             itemValue: "id",
+            containerClass: "bg-surface!",
             placeholder: "Select category...",
           },
         );
@@ -363,6 +489,7 @@ export const MindFormController = {
             iconClass: "ti ti-tag text-brand/80",
             itemTitle: "name",
             itemValue: "id",
+            containerClass: "bg-surface!",
             placeholder: "Select or add tags...",
             allowCustom: true,
             multiple: true,
@@ -373,11 +500,11 @@ export const MindFormController = {
     } else if (activeTab === "snippets") {
       const codeInput = document.getElementById("edit-snippet-code");
       const descInput = document.getElementById("edit-snippet-desc");
-      const favoriteCheckbox = document.getElementById("edit-snippet-favorite");
+      const pinnedCheckbox = document.getElementById("edit-snippet-pinned");
 
       if (codeInput) codeInput.value = currentItem.code || "";
       if (descInput) descInput.value = currentItem.description || "";
-      if (favoriteCheckbox) favoriteCheckbox.checked = !!currentItem.favorite;
+      if (pinnedCheckbox) pinnedCheckbox.checked = !!currentItem.pinned;
 
       const editSnippetLangContainer = document.getElementById(
         "edit-snippet-category-autocomplete",
@@ -390,6 +517,7 @@ export const MindFormController = {
             label: "Category",
             itemTitle: "name",
             itemValue: "id",
+            containerClass: "bg-surface!",
             placeholder: "Select category...",
           },
         );
@@ -410,6 +538,7 @@ export const MindFormController = {
             iconClass: "ti ti-tag text-brand/80",
             itemTitle: "name",
             itemValue: "id",
+            containerClass: "bg-surface!",
             placeholder: "Select or add tags...",
             allowCustom: true,
             multiple: true,
@@ -420,9 +549,11 @@ export const MindFormController = {
     } else if (activeTab === "bookmarks") {
       const urlInput = document.getElementById("edit-bookmark-url");
       const descInput = document.getElementById("edit-bookmark-desc");
+      const pinnedCheckbox = document.getElementById("edit-bookmark-pinned");
 
       if (urlInput) urlInput.value = currentItem.url || "";
       if (descInput) descInput.value = currentItem.description || "";
+      if (pinnedCheckbox) pinnedCheckbox.checked = !!currentItem.pinned;
 
       const editBookmarkCatContainer = document.getElementById(
         "edit-bookmark-category-autocomplete",
@@ -435,6 +566,7 @@ export const MindFormController = {
             label: "Category",
             itemTitle: "name",
             itemValue: "id",
+            containerClass: "bg-surface!",
             placeholder: "Select category...",
           },
         );
@@ -456,6 +588,7 @@ export const MindFormController = {
             iconClass: "ti ti-tag text-brand/80",
             itemValue: "id",
             placeholder: "Select or add tags...",
+            containerClass: "bg-surface!",
             allowCustom: true,
             multiple: true,
           },
@@ -464,7 +597,16 @@ export const MindFormController = {
       }
     } else if (activeTab === "cheatsheets") {
       const descInput = document.getElementById("edit-cheatsheet-desc");
+      const pinnedCheckbox = document.getElementById("edit-cheatsheet-pinned");
+
       if (descInput) descInput.value = currentItem.description || "";
+      if (pinnedCheckbox) pinnedCheckbox.checked = !!currentItem.pinned;
+
+      // Deep copy existing items to avoid mutating state before save
+      activeModalCheatSheetItems = (currentItem.items || []).map((i) => ({
+        ...i,
+      }));
+      this.renderCheatSheetItemsList();
 
       const editCheatCatContainer = document.getElementById(
         "edit-cheatsheet-category-autocomplete",
@@ -477,6 +619,7 @@ export const MindFormController = {
             label: "Category",
             itemTitle: "name",
             itemValue: "id",
+            containerClass: "bg-surface!",
             placeholder: "Select category...",
           },
         );
@@ -497,6 +640,7 @@ export const MindFormController = {
             iconClass: "ti ti-tag text-brand/80",
             itemTitle: "name",
             itemValue: "id",
+            containerClass: "bg-surface!",
             placeholder: "Select or add tags...",
             allowCustom: true,
             multiple: true,
@@ -513,6 +657,43 @@ export const MindFormController = {
 
     const titleInput = document.getElementById("create-item-title");
     const addBtn = document.getElementById("add-plan-btn");
+
+    // CheatSheet Items Add Event in Modal
+    const addCsItemBtn = document.getElementById("btn-add-cheatsheet-item");
+    if (addCsItemBtn) {
+      addCsItemBtn.addEventListener("click", () => {
+        const keyInput = document.getElementById("edit-cs-item-key");
+        const valInput = document.getElementById("edit-cs-item-val");
+        const descInput = document.getElementById("edit-cs-item-desc");
+
+        const key = keyInput?.value.trim();
+        const value = valInput?.value.trim();
+        const description = descInput?.value.trim();
+
+        if (!key || !value) {
+          NotificationService.show({
+            type: "error",
+            message: "Key and Value are required for CheatSheet items",
+            icon: "ti-alert-triangle",
+            duration: 4000,
+          });
+          return;
+        }
+
+        activeModalCheatSheetItems.push({
+          id: generateId(),
+          key,
+          value,
+          description,
+        });
+
+        if (keyInput) keyInput.value = "";
+        if (valInput) valInput.value = "";
+        if (descInput) descInput.value = "";
+
+        this.renderCheatSheetItemsList();
+      });
+    }
 
     const handleCreateItem = () => {
       const activeTab = StateManager.getActiveTab() || "notes";
@@ -813,7 +994,7 @@ export const MindFormController = {
       if (el) el.value = "";
     });
 
-    const checkboxesToReset = ["create-note-pinned", "create-snippet-favorite"];
+    const checkboxesToReset = ["create-note-pinned", "create-snippet-pinned"];
     checkboxesToReset.forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.checked = false;
@@ -965,8 +1146,7 @@ export const MindFormController = {
               title: titleInput?.value,
               code: document.getElementById("edit-snippet-code")?.value,
               description: document.getElementById("edit-snippet-desc")?.value,
-              favorite: document.getElementById("edit-snippet-favorite")
-                ?.checked,
+              pinned: document.getElementById("edit-snippet-pinned")?.checked,
               category: editSnippetCategoryAutocomplete
                 ? editSnippetCategoryAutocomplete.getValue()
                 : "javascript",
@@ -994,6 +1174,7 @@ export const MindFormController = {
               title: titleInput?.value,
               url: document.getElementById("edit-bookmark-url")?.value,
               description: document.getElementById("edit-bookmark-desc")?.value,
+              pinned: document.getElementById("edit-bookmark-pinned")?.checked,
               category: editBookmarkCategoryAutocomplete
                 ? editBookmarkCategoryAutocomplete.getValue()
                 : "general",
@@ -1021,9 +1202,12 @@ export const MindFormController = {
               title: titleInput?.value,
               description: document.getElementById("edit-cheatsheet-desc")
                 ?.value,
+              pinned: document.getElementById("edit-cheatsheet-pinned")
+                ?.checked,
               category: editCheatSheetCategoryAutocomplete
                 ? editCheatSheetCategoryAutocomplete.getValue()
                 : "general",
+              items: activeModalCheatSheetItems,
               tagIds: assignedTagIds,
             },
           );
