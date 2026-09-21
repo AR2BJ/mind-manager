@@ -176,11 +176,7 @@ export class NavigationController {
       if (event.shiftKey && ["m", "a", "s"].includes(key)) {
         event.preventDefault();
         const targetTab =
-          key === "m"
-            ? "mind"
-            : key === "a"
-              ? "analytics"
-                : "settings";
+          key === "m" ? "mind" : key === "a" ? "analytics" : "settings";
         this.setActiveTab(targetTab);
         return;
       }
@@ -250,6 +246,8 @@ export class NavigationController {
       "help-modal",
       "delete-modal",
       "reset-modal",
+      "tag-delete-modal",
+      "fullscreen-snippet-modal",
       "edit-modal",
     ];
     modalIds.forEach((id) => {

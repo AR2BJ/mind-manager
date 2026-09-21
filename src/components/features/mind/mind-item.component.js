@@ -3,6 +3,13 @@ import { getLineNumbersHtml, highlightWithShiki } from "@/utils/code-formatter";
 
 import { capitalize } from "@/utils/helpers";
 
+function formatCodeSize(codeStr) {
+  if (!codeStr) return "0 B";
+  const bytes = new Blob([codeStr]).size;
+  if (bytes < 1024) return `${bytes} B`;
+  return `${(bytes / 1024).toFixed(1)} KB`;
+}
+
 export const MindItemComponent = {
   // --- HELPERS ---
 
@@ -231,14 +238,16 @@ export const MindItemComponent = {
     const categoryBadge = this._getCategoryBadgeHtml(snippet.category);
     const tagIdsHtml = this._renderTagsHtml(snippet.tagIds);
 
-    const categoryIcon = categories.find((c) => c.id === snippet.category).icon;
-    const categoryFormat = categories.find(
-      (c) => c.id === snippet.category,
-    ).format;
+    const categoryIcon =
+      categories.find((c) => c.id === snippet.category)?.icon || "ti ti-code";
+    const categoryFormat =
+      categories.find((c) => c.id === snippet.category)?.format || "code";
 
     const lineNumbersHtml = snippet.code
       ? getLineNumbersHtml(snippet.code)
       : "";
+
+    const codeSizeFormatted = formatCodeSize(snippet.code);
 
     if (snippet.code) {
       setTimeout(() => {
@@ -301,12 +310,16 @@ export const MindItemComponent = {
 
                     <div class="flex items-center gap-2">
                       <div
-                        class="accordion-actions-group hidden items-center gap-1.5"
+                        class="accordion-actions-group hidden items-center gap-2"
                       >
+                        <span class="text-[10px] text-muted font-sans border-r border-border/60 pr-2">
+                          ${codeSizeFormatted}
+                        </span>
+
                         <button
                           type="button"
                           data-copy-snippet-id="${snippet.id}"
-                          class="copy-snippet-btn inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-2/80 hover:bg-brand/20 hover:text-brand text-color transition-colors border border-border/50 cursor-pointer"
+                          class="copy-snippet-btn inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface hover:bg-brand/20 hover:text-brand text-color transition-colors border border-border/50 cursor-pointer"
                           title="Copy Code"
                         >
                           <i class="ti ti-copy text-xs pb-0.5"></i>
@@ -316,11 +329,20 @@ export const MindItemComponent = {
                         <button
                           type="button"
                           data-download-snippet-id="${snippet.id}"
-                          class="download-snippet-btn inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-2/80 hover:bg-brand/20 hover:text-brand text-color transition-colors border border-border/50 cursor-pointer"
+                          class="download-snippet-btn inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface hover:bg-brand/20 hover:text-brand text-color transition-colors border border-border/50 cursor-pointer"
                           title="Download Code"
                         >
                           <i class="ti ti-download text-xs pb-0.5"></i>
                           <span>Download</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          data-fullscreen-snippet-id="${snippet.id}"
+                          class="fullscreen-snippet-btn inline-flex items-center gap-1 py-1 px-1.25 rounded-md bg-surface hover:bg-brand/20 hover:text-brand text-color transition-colors border border-border/50 cursor-pointer"
+                          title="Full Screen View"
+                        >
+                          <i class="ti ti-maximize text-xs pb-px"></i>
                         </button>
                       </div>
 

@@ -13,6 +13,7 @@ export const MindActionController = {
     this.mainController = mainController;
     this.bindDynamicEvents();
     this.setupSnippetCodeUX();
+    this.setupFullscreenModalEvents();
   },
 
   handleToggleNotePin(noteId) {
@@ -224,6 +225,98 @@ export const MindActionController = {
       });
   },
 
+  handleOpenFullscreenModal(snippetId) {
+    const snippets = StateManager.getSnippets() || [];
+    const targetSnippet = snippets.find(
+      (s) => String(s.id) === String(snippetId),
+    );
+    if (!targetSnippet) return;
+
+    const modal = document.getElementById("fullscreen-snippet-modal");
+    const titleEl = document.getElementById("fullscreen-modal-title");
+    const subtitleEl = document.getElementById("fullscreen-modal-subtitle");
+    const lineNumbersEl = document.getElementById(
+      "fullscreen-modal-line-numbers",
+    );
+    const codeContentEl = document.getElementById(
+      "fullscreen-modal-code-content",
+    );
+    const copyBtn = document.getElementById("fullscreen-modal-copy-btn");
+    const downloadBtn = document.getElementById(
+      "fullscreen-modal-download-btn",
+    );
+
+    if (!modal) return;
+
+    if (titleEl)
+      titleEl.textContent = targetSnippet.title || "Untitled Snippet";
+    if (subtitleEl)
+      subtitleEl.textContent =
+        targetSnippet.description || "Full view code inspector";
+
+    if (lineNumbersEl) {
+      const lineCount = (targetSnippet.code || "").split("\n").length;
+      lineNumbersEl.innerHTML = Array.from(
+        { length: lineCount },
+        (_, i) => `<span>${i + 1}</span>`,
+      ).join("");
+    }
+
+    if (codeContentEl) {
+      codeContentEl.innerHTML = `<pre class="m-0 p-0 bg-transparent text-slate-200 font-mono whitespace-pre"><code>${targetSnippet.code || ""}</code></pre>`;
+
+      if (targetSnippet.code) {
+        import("@/utils/code-formatter").then(({ highlightWithShiki }) => {
+          highlightWithShiki(targetSnippet.code, targetSnippet.category)
+            .then((html) => {
+              if (codeContentEl) codeContentEl.innerHTML = html;
+            })
+            .catch((err) => console.error("Shiki Fullscreen Error:", err));
+        });
+      }
+    }
+
+    if (copyBtn) {
+      copyBtn.onclick = () => this.handleCopyText(targetSnippet.code);
+    }
+
+    if (downloadBtn) {
+      downloadBtn.onclick = () => this.handleDownloadSnippet(targetSnippet.id);
+    }
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+
+    document.body.classList.add("overflow-hidden");
+  },
+
+  handleCloseFullscreenModal() {
+    const modal = document.getElementById("fullscreen-snippet-modal");
+    if (modal) {
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    document.body.classList.remove("overflow-hidden");
+  },
+
+  setupFullscreenModalEvents() {
+    const modal = document.getElementById("fullscreen-snippet-modal");
+    const closeBtn = document.getElementById("close-fullscreen-modal");
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () =>
+        this.handleCloseFullscreenModal(),
+      );
+    }
+
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) this.handleCloseFullscreenModal();
+      });
+    }
+  },
+
   bindDynamicEvents() {
     const listContainer = document.getElementById("mind-list");
     if (!listContainer) return;
@@ -267,25 +360,7 @@ export const MindActionController = {
         return;
       }
 
-      // 5. ACCORDION TOGGLE HANDLER
-      const accordionBtn = target.closest(".toggle-accordion-btn");
-      if (accordionBtn) {
-        if (
-          target.closest(".copy-snippet-btn") ||
-          target.closest(".download-snippet-btn")
-        ) {
-          return;
-        }
-
-        e.stopPropagation();
-        const snippetId = accordionBtn.dataset.snippetAccordionId;
-        if (snippetId) {
-          this.handleToggleAccordion(accordionBtn);
-        }
-        return;
-      }
-
-      // 6. COPY BUTTON HANDLER
+      // 5. COPY BUTTON HANDLER
       const copyBtn = target.closest(".copy-btn");
       if (copyBtn) {
         e.stopPropagation();
@@ -309,7 +384,7 @@ export const MindActionController = {
         return;
       }
 
-      // 7. DOWNLOAD BUTTON HANDLER
+      // 6. DOWNLOAD BUTTON HANDLER
       const downloadSnippetBtn = target.closest(".download-snippet-btn");
       if (downloadSnippetBtn) {
         e.stopPropagation();
@@ -320,7 +395,34 @@ export const MindActionController = {
         return;
       }
 
-      // 8. EDIT MODAL TRIGGER
+      // 7. FULLSCREEN TRIGGER
+      const fullscreenBtn = target.closest(".fullscreen-snippet-btn");
+      if (fullscreenBtn) {
+        e.stopPropagation();
+        const snippetId = fullscreenBtn.dataset.fullscreenSnippetId;
+        if (snippetId) this.handleOpenFullscreenModal(snippetId);
+        return;
+      }
+
+      // 8. ACCORDION TOGGLE HANDLER
+      const accordionBtn = target.closest(".toggle-accordion-btn");
+      if (accordionBtn) {
+        if (
+          target.closest(".copy-snippet-btn") ||
+          target.closest(".download-snippet-btn")
+        ) {
+          return;
+        }
+
+        e.stopPropagation();
+        const snippetId = accordionBtn.dataset.snippetAccordionId;
+        if (snippetId) {
+          this.handleToggleAccordion(accordionBtn);
+        }
+        return;
+      }
+
+      // 9. EDIT MODAL TRIGGER
       const editBtn = target.closest(".edit-btn");
       if (editBtn) {
         e.stopPropagation();
@@ -337,7 +439,7 @@ export const MindActionController = {
         return;
       }
 
-      // 9. DELETE MODAL TRIGGER
+      // 10. DELETE MODAL TRIGGER
       const deleteBtn = target.closest(".delete-btn");
       if (deleteBtn) {
         e.stopPropagation();
@@ -354,7 +456,7 @@ export const MindActionController = {
         return;
       }
 
-      // 10. DIRECT DELETE ITEM HANDLER
+      // 11. DIRECT DELETE ITEM HANDLER
       const directDeleteBtn = target.closest(".direct-delete-btn");
       if (directDeleteBtn) {
         e.stopPropagation();

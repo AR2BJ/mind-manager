@@ -11,6 +11,7 @@ import { AutocompleteComponent } from "@/components/ui/autocomplete.component.js
 import { DeleteModalsComponent } from "@/components/modals/delete-modals.component.js";
 import { DesktopNavComponent } from "@/components/layout/desktop-nav.component.js";
 import { EditModalsComponent } from "@/components/modals/edit-modals.component.js";
+import { FullscreenModalComponent } from "@/components/modals/fullscreen-modal.component.js";
 import { GlobalLoaderService } from "@/services/loader.service.js";
 import { HeaderComponent } from "@/components/shared/header.component.js";
 import { InfoModalComponent } from "@/components/modals/info-modal.component.js";
@@ -205,7 +206,7 @@ export const MindController = {
       "analytics-view-container": AnalyticsView.render,
       "settings-view-container": SettingsViewComponent.render,
       "help-modal-container": InfoModalComponent.render,
-      "edit-modals-container": EditModalsComponent.render,
+      "fullscreen-modals-container": FullscreenModalComponent.render,
       "edit-modals-container": EditModalsComponent.render,
       "delete-modals-container": DeleteModalsComponent.render,
     };
