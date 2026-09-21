@@ -1,4 +1,5 @@
 import { StateManager, state } from "@/models/state.model.js";
+import { getLineNumbersHtml, highlightWithShiki } from "@/utils/code-formatter";
 
 import { capitalize } from "@/utils/helpers";
 
@@ -24,7 +25,7 @@ export const MindItemComponent = {
       <span
         class="inline-flex items-center gap-1 rounded-md border ${catData.class} px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
       >
-        <i class="${iconClass} text-xs pb-0.5"></i>
+        <i class="${iconClass} text-xs lg:text-sm pb-0.5"></i>
         <span>${catData.name}</span>
       </span>
     `;
@@ -44,9 +45,9 @@ export const MindItemComponent = {
           .map(
             (tag) => `
               <span
-                class="inline-flex items-center gap-1 rounded-md bg-surface-3/50 px-2 py-0.5 text-[10px] text-secondary/80 border border-border/30"
+                class="inline-flex items-center gap-1 rounded-md bg-surface-3/50 px-2 py-0.5 text-xs text-secondary/80 border border-border/30"
               >
-                <i class="ti ti-tag text-xs pb-0.5"></i>
+                <i class="ti ti-tag pb-0.5 text-xs lg:text-sm"></i>
                 <span>${tag.name}</span>
               </span>
             `,
@@ -225,8 +226,34 @@ export const MindItemComponent = {
   },
 
   renderSnippet(snippet) {
+    const categories = StateManager.getCategories();
+
     const categoryBadge = this._getCategoryBadgeHtml(snippet.category);
     const tagIdsHtml = this._renderTagsHtml(snippet.tagIds);
+
+    const categoryIcon = categories.find((c) => c.id === snippet.category).icon;
+    const categoryFormat = categories.find(
+      (c) => c.id === snippet.category,
+    ).format;
+
+    const lineNumbersHtml = snippet.code
+      ? getLineNumbersHtml(snippet.code)
+      : "";
+
+    if (snippet.code) {
+      setTimeout(() => {
+        highlightWithShiki(snippet.code, snippet.category)
+          .then((html) => {
+            const el = document.querySelector(
+              `[data-shiki-id="${snippet.id}"]`,
+            );
+            if (el) {
+              el.innerHTML = html;
+            }
+          })
+          .catch((err) => console.error("Shiki Error:", err));
+      }, 0);
+    }
 
     return `
       <div
@@ -236,19 +263,7 @@ export const MindItemComponent = {
         <div class="flex items-start justify-between gap-3">
           <div class="flex flex-col min-w-0 w-full gap-1.5">
             <div class="flex items-center gap-2 flex-wrap">
-              ${categoryBadge}
-              
-              ${
-                snippet.pinned
-                  ? `<span
-                      class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
-                    >
-                      <i class="ti ti-pinned-filled text-[11px]"></i> Pinned
-                    </span>`
-                  : ""
-              }
-
-              ${tagIdsHtml}
+              ${categoryBadge} ${tagIdsHtml}
             </div>
 
             <h3 class="text-base font-bold mt-1 text-color wrap-break-word">
@@ -268,10 +283,64 @@ export const MindItemComponent = {
         ${
           snippet.code
             ? `
-              <div class="relative mt-2 rounded-lg bg-surface/90 border border-border/60 p-3 font-mono text-xs overflow-x-auto">
-                <pre class="text-color/90 leading-snug"><code>${snippet.code}</code></pre>
-              </div>
-            `
+                <div
+                  class="snippet-code-container relative mt-2 rounded-lg bg-surface border border-border/60 overflow-hidden font-mono text-xs shadow-inner"
+                >
+                  <div
+                    class="flex items-center justify-between px-3 py-1.5 bg-surface-3 border-b border-border/40 text-[11px] text-slate-400 select-none"
+                  >
+                    <span
+                      class="flex items-center gap-1.5 font-medium tracking-wider text-color"
+                    >
+                      <i class="${categoryIcon} text-xs lg:text-sm pb-0.5"></i>
+                      <span class="text-[10px] lg:text-[11px]">
+                        ${categoryFormat}
+                      </span>
+                    </span>
+
+                    <div class="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        data-copy-snippet-id="${snippet.id}"
+                        class="copy-snippet-btn inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-2/80 hover:bg-brand/20 hover:text-brand text-color transition-colors border border-border/50 cursor-pointer"
+                        title="Copy Code"
+                      >
+                        <i class="ti ti-copy text-xs pb-0.5"></i>
+                        <span>Copy</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        data-download-snippet-id="${snippet.id}"
+                        class="download-snippet-btn inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-2/80 hover:bg-brand/20 hover:text-brand text-color transition-colors border border-border/50 cursor-pointer"
+                        title="Download Code"
+                      >
+                        <i class="ti ti-download text-xs pb-0.5"></i>
+                        <span>Download</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    class="code-scroll-wrapper relative flex overflow-x-auto max-h-70 p-3 select-text"
+                  >
+                    <div
+                      class="line-numbers-col h-full shrink-0 flex flex-col pr-3 mr-3 border-r border-slate-700/60 select-none text-right text-slate-500 font-mono text-[12px] leading-[1.6]"
+                    >
+                      ${lineNumbersHtml}
+                    </div>
+
+                    <div
+                      data-shiki-id="${snippet.id}"
+                      class="shiki-container code-content-col flex-1 font-mono text-[12px] leading-[1.6]"
+                    >
+                      <pre
+                        class="m-0 p-0 bg-transparent text-slate-200 font-mono whitespace-pre"
+                      ><code>${snippet.code}</code></pre>
+                    </div>
+                  </div>
+                </div>
+              `
             : ""
         }
 

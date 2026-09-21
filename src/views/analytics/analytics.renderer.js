@@ -274,14 +274,14 @@ function renderNoDataState() {
         "Visual breakdown across Notes, Snippets, Bookmarks & Cheatsheets.",
     },
     {
-      id: "apex-mood-chart",
+      id: "apex-tags-chart",
       title: "Top Tags Breakdown",
       icon: "ti-tags",
       subtitle:
         "Categorize your knowledge base items with tags to track distribution.",
     },
     {
-      id: "apex-energy-chart",
+      id: "apex-status-chart",
       title: "Storage Allocation",
       icon: "ti-database",
       subtitle: "Displays entity size metrics and system storage ratio.",
@@ -640,7 +640,7 @@ export function renderAnalyticsCharts(
   const heatmapEl = document.getElementById("apex-heatmap-chart");
   const barEl = document.getElementById("apex-weekday-chart");
   const categoryEl = document.getElementById("apex-category-chart");
-  const tagEl = document.getElementById("apex-tas-chart");
+  const tagEl = document.getElementById("apex-tags-chart");
   const statusEl = document.getElementById("apex-status-chart");
 
   if (heatmapEl) {

@@ -5,6 +5,29 @@ import {
   SNIPPET_CATEGORIES,
 } from "@/utils/constants/options-value.constants";
 
+const emptyStateConfig = {
+  notes: {
+    icon: "<i class='ti ti-note text-brand/60'></i>",
+    title: "No notes found",
+    description: "Capture thoughts, ideas, and knowledge in structured notes.",
+  },
+  snippets: {
+    icon: "<i class='ti ti-code text-brand/60'></i>",
+    title: "No code snippets saved",
+    description: "Save and organize reusable code snippets for easy access.",
+  },
+  bookmarks: {
+    icon: "<i class='ti ti-bookmark text-brand/60'></i>",
+    title: "No bookmarks added",
+    description: "Keep track of useful links, docs, and online resources.",
+  },
+  cheatsheets: {
+    icon: "<i class='ti ti-file-description text-brand/60'></i>",
+    title: "No cheatSheets available",
+    description: "Create quick reference guides and key-value shortcuts.",
+  },
+};
+
 export const DashboardComponent = {
   render(
     tags = [],
@@ -334,7 +357,7 @@ export const DashboardComponent = {
             class="w-full mt-6 overflow-x-auto scrollbar-thin scrollbar-thumb-surface"
           >
             <div
-              id="apex-tas-chart"
+              id="apex-tags-chart"
               class="w-full"
             ></div>
           </div>
@@ -470,7 +493,7 @@ export const DashboardComponent = {
         <span
           class="inline-flex items-center gap-1 rounded-md border ${catData.class} px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
         >
-          <i class="${iconClass} text-xs pb-0.5"></i>
+          <i class="${iconClass} text-xs lg:text-sm pb-0.5"></i>
           <span>${catData.name}</span>
         </span>
       `;
@@ -487,9 +510,9 @@ export const DashboardComponent = {
           .map(
             (tag) => `
               <span
-                class="inline-flex items-center gap-1 rounded-md bg-surface-3/50 px-2 py-0.5 text-[10px] text-secondary/80 border border-border/30"
+                class="inline-flex items-center gap-1 rounded-md bg-surface-3/50 px-2 py-0.5 text-xs text-secondary/80 border border-border/30"
               >
-                <i class="ti ti-tag text-xs pb-0.5"></i>
+                <i class="ti ti-tag text-xs lg:text-sm pb-0.5"></i>
                 <span>${tag.name}</span>
               </span>
             `,
@@ -558,9 +581,17 @@ export const DashboardComponent = {
   },
 
   renderNotesList(notes, tags) {
+    const currentEmpty = emptyStateConfig["notes"];
+
     if (!Array.isArray(notes) || notes.length === 0) {
-      return `<div class="p-12 text-center text-secondary text-sm border border-dashed border-border/80 rounded-2xl bg-surface/30">
-        No notes registered in state repository.
+      return `<div
+        class="min-h-50 bg-surface border border-dashed border-border rounded-2xl p-12 text-center flex flex-col items-center justify-center"
+      >
+        <div class="text-5xl mb-2 text-brand/70">${currentEmpty.icon}</div>
+        <h2 class="text-lg font-bold text-color">${currentEmpty.title}</h2>
+        <p class="mt-2 text-xs text-secondary max-w-sm mx-auto">
+          ${currentEmpty.description}
+        </p>
       </div>`;
     }
     return notes
@@ -606,11 +637,17 @@ export const DashboardComponent = {
   },
 
   renderSnippetsList(snippets, tags) {
+    const currentEmpty = emptyStateConfig["snippets"];
+
     if (!Array.isArray(snippets) || snippets.length === 0) {
       return `<div
-        class="p-12 text-center text-secondary text-sm border border-dashed border-border/80 rounded-2xl bg-surface/30"
+        class="min-h-50 bg-surface border border-dashed border-border rounded-2xl p-12 text-center flex flex-col items-center justify-center"
       >
-        No code snippets registered in state repository.
+        <div class="text-5xl mb-2 text-brand/70">${currentEmpty.icon}</div>
+        <h2 class="text-lg font-bold text-color">${currentEmpty.title}</h2>
+        <p class="mt-2 text-xs text-secondary max-w-sm mx-auto">
+          ${currentEmpty.description}
+        </p>
       </div>`;
     }
     return snippets
@@ -656,11 +693,17 @@ export const DashboardComponent = {
   },
 
   renderBookmarksList(bookmarks, tags) {
+    const currentEmpty = emptyStateConfig["bookmarks"];
+
     if (!Array.isArray(bookmarks) || bookmarks.length === 0) {
       return `<div
-        class="p-12 text-center text-secondary text-sm border border-dashed border-border/80 rounded-2xl bg-surface/30"
+        class="min-h-50 bg-surface border border-dashed border-border rounded-2xl p-12 text-center flex flex-col items-center justify-center"
       >
-        No bookmarks saved in state repository.
+        <div class="text-5xl mb-2 text-brand/70">${currentEmpty.icon}</div>
+        <h2 class="text-lg font-bold text-color">${currentEmpty.title}</h2>
+        <p class="mt-2 text-xs text-secondary max-w-sm mx-auto">
+          ${currentEmpty.description}
+        </p>
       </div>`;
     }
     return bookmarks
@@ -713,11 +756,17 @@ export const DashboardComponent = {
   },
 
   renderCheatSheetsList(cheatsheets, tags) {
+    const currentEmpty = emptyStateConfig["cheatsheets"];
+
     if (!Array.isArray(cheatsheets) || cheatsheets.length === 0) {
       return `<div
-        class="p-12 text-center text-secondary text-sm border border-dashed border-border/80 rounded-2xl bg-surface/30"
+        class="min-h-50 bg-surface border border-dashed border-border rounded-2xl p-12 text-center flex flex-col items-center justify-center"
       >
-        No cheatsheets saved in state repository.
+        <div class="text-5xl mb-2 text-brand/70">${currentEmpty.icon}</div>
+        <h2 class="text-lg font-bold text-color">${currentEmpty.title}</h2>
+        <p class="mt-2 text-xs text-secondary max-w-sm mx-auto">
+          ${currentEmpty.description}
+        </p>
       </div>`;
     }
     return cheatsheets

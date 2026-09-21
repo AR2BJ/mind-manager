@@ -1,5 +1,4 @@
 import { MindItemComponent } from "@/components/features/mind/mind-item.component";
-import { capitalize } from "@/utils/helpers";
 import { state } from "@/models/state.model";
 
 export function renderMindList(items, activeTab = "notes") {

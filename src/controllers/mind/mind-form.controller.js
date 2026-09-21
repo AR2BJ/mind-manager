@@ -157,7 +157,7 @@ export const MindFormController = {
           placeholder: "Select category...",
         },
       );
-      createSnippetCategoryAutocomplete.setValue("javascript");
+      createSnippetCategoryAutocomplete.setValue("html");
     }
 
     const bookmarkCatContainer = document.getElementById(
@@ -683,7 +683,7 @@ export const MindFormController = {
           },
         );
         editSnippetCategoryAutocomplete.setValue(
-          currentItem.category || "javascript",
+          currentItem.category || "html",
         );
       }
 
@@ -893,7 +893,7 @@ export const MindFormController = {
               false;
             const category = createSnippetCategoryAutocomplete
               ? createSnippetCategoryAutocomplete.getValue()
-              : "javascript";
+              : "html";
 
             const rawSelectedTags = createSnippetTagCombobox
               ? createSnippetTagCombobox.getSelectedItems()
@@ -1237,6 +1237,8 @@ export const MindFormController = {
 
     setTimeout(() => {
       try {
+        const title = titleInput?.value.trim();
+
         const stateData = StateManager.getState();
         const currentGlobalTags = StateManager.getTags() || [];
 
@@ -1250,6 +1252,16 @@ export const MindFormController = {
             currentGlobalTags,
             "notes",
           );
+
+          if (!title) {
+            NotificationService.show({
+              type: "error",
+              message: "Note title cannot be empty",
+              icon: "ti-alert-triangle",
+              duration: 5000,
+            });
+            return;
+          }
 
           const updatedNotes = MindService.editNote(
             stateData.notes || [],
@@ -1283,6 +1295,16 @@ export const MindFormController = {
             "snippets",
           );
 
+          if (!title || !document.getElementById("edit-snippet-code")?.value) {
+            NotificationService.show({
+              type: "error",
+              message: "Snippet title or code cannot be empty",
+              icon: "ti-alert-triangle",
+              duration: 5000,
+            });
+            return;
+          }
+
           const updatedSnippets = MindService.editSnippet(
             stateData.snippets || [],
             pendingEditId,
@@ -1293,7 +1315,7 @@ export const MindFormController = {
               pinned: document.getElementById("edit-snippet-pinned")?.checked,
               category: editSnippetCategoryAutocomplete
                 ? editSnippetCategoryAutocomplete.getValue()
-                : "javascript",
+                : "html",
               tagIds: assignedTagIds,
             },
           );
@@ -1318,6 +1340,16 @@ export const MindFormController = {
             currentGlobalTags,
             "bookmarks",
           );
+
+          if (!title || !document.getElementById("edit-bookmark-url")?.value) {
+            NotificationService.show({
+              type: "error",
+              message: "Bookmark title or URL cannot be empty",
+              icon: "ti-alert-triangle",
+              duration: 5000,
+            });
+            return;
+          }
 
           const updatedBookmarks = MindService.editBookmark(
             stateData.bookmarks || [],
@@ -1354,6 +1386,16 @@ export const MindFormController = {
             currentGlobalTags,
             "cheatsheets",
           );
+
+          if (!title) {
+            NotificationService.show({
+              type: "error",
+              message: "Cheatsheet title cannot be empty",
+              icon: "ti-alert-triangle",
+              duration: 5000,
+            });
+            return;
+          }
 
           const updatedCheatSheets = MindService.editCheatSheet(
             stateData.cheatsheets || [],

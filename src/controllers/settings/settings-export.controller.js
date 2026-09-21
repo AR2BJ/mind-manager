@@ -83,7 +83,7 @@ export const SettingsExportController = {
       content += `_No tags defined._\n\n`;
     } else {
       tags.forEach((tag) => {
-        content += `- Tag: ${tag.name} (ID: ${tag.id}) **Entity Type:** ${tag.entityType}\n`;
+        content += `- Tag: ${tag.name} (ID: ${tag.id}) **Entity Type:** ${tag.entityType || "none"}\n`;
       });
       content += `\n`;
     }
@@ -98,9 +98,9 @@ export const SettingsExportController = {
         content += `- **Category:** ${item.category || "general"}\n`;
         content += `- **Pinned:** ${item.pinned ? "Yes" : "No"}\n`;
         content += `- **Tags:** ${(item.tagIds || []).join(", ") || "None"}\n`;
-        content += `- **Created At:** ⏰ ${item.createdAt}\n`;
-        content += `- **Updated At:** ⏰ ${item.updatedAt}\n\n`;
-        content += `#### Content:\n${item.content || "N/A"}\n\n`;
+        content += `- **Created At:** ${item.createdAt || todayISO()}\n`;
+        content += `- **Updated At:** ${item.updatedAt || todayISO()}\n\n`;
+        content += `#### Content:\n\`\`\`markdown\n${item.content || ""}\n\`\`\`\n\n`;
       });
     }
 
@@ -111,16 +111,14 @@ export const SettingsExportController = {
     } else {
       snippets.forEach((item) => {
         const lang = item.category || "text";
-        const code = item.code || "";
-
         content += `### 📄 ${item.title} (ID: ${item.id})\n`;
         content += `- **Category:** ${lang}\n`;
         content += `- **Pinned:** ${item.pinned ? "Yes" : "No"}\n`;
         content += `- **Description:** ${item.description || "N/A"}\n`;
         content += `- **Tags:** ${(item.tagIds || []).join(", ") || "None"}\n`;
-        content += `- **Created At:** ⏰ ${item.createdAt}\n`;
-        content += `- **Updated At:** ⏰ ${item.updatedAt}\n\n`;
-        content += "```" + lang + "\n" + code + "\n```\n\n";
+        content += `- **Created At:** ${item.createdAt || todayISO()}\n`;
+        content += `- **Updated At:** ${item.updatedAt || todayISO()}\n\n`;
+        content += "```" + lang + "\n" + (item.code || "") + "\n```\n\n";
       });
     }
 
@@ -137,8 +135,8 @@ export const SettingsExportController = {
         content += `- **Pinned:** ${item.pinned ? "Yes" : "No"}\n`;
         content += `- **Description:** ${item.description || "N/A"}\n`;
         content += `- **Tags:** ${(item.tagIds || []).join(", ") || "None"}\n`;
-        content += `- **Created At:** ⏰ ${item.createdAt}\n`;
-        content += `- **Updated At:** ⏰ ${item.updatedAt}\n\n`;
+        content += `- **Created At:** ${item.createdAt || todayISO()}\n`;
+        content += `- **Updated At:** ${item.updatedAt || todayISO()}\n\n`;
       });
     }
 
@@ -153,8 +151,8 @@ export const SettingsExportController = {
         content += `- **Pinned:** ${item.pinned ? "Yes" : "No"}\n`;
         content += `- **Description:** ${item.description || "N/A"}\n`;
         content += `- **Tags:** ${(item.tagIds || []).join(", ") || "None"}\n`;
-        content += `- **Created At:** ⏰ ${item.createdAt}\n`;
-        content += `- **Updated At:** ⏰ ${item.updatedAt}\n\n`;
+        content += `- **Created At:** ${item.createdAt || todayISO()}\n`;
+        content += `- **Updated At:** ${item.updatedAt || todayISO()}\n\n`;
         content += `#### Items:\n`;
         if (Array.isArray(item.items) && item.items.length > 0) {
           item.items.forEach((sub) => {

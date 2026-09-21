@@ -57,7 +57,7 @@ export function normalizeSnippet(data = {}) {
     title: data.title || "Untitled Snippet",
     description: data.description || "",
     code: data.code || "",
-    category: data.category || "general",
+    category: data.category || "html",
     pinned: Boolean(data.pinned || data.isFavorite),
     tagIds: Array.isArray(data.tagIds)
       ? data.tagIds.map((t) => (typeof t === "object" ? t.id : String(t)))

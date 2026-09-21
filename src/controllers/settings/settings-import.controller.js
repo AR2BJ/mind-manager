@@ -1,4 +1,11 @@
 import { StateManager, state } from "@/models/state.model.js";
+import {
+  normalizeBookmark,
+  normalizeCheatSheet,
+  normalizeNote,
+  normalizeSnippet,
+  normalizeTag,
+} from "@/models/storage.model.js";
 
 import { GlobalLoaderService } from "@/services/loader.service";
 import { MindController } from "../mind.controller.js";
@@ -110,11 +117,11 @@ export const SettingsImportController = {
           }
 
           StateManager.save({
-            tags: importedTags,
-            notes: importedNotes,
-            snippets: importedSnippets,
-            bookmarks: importedBookmarks,
-            cheatsheets: importedCheatsheets,
+            tags: importedTags.map(normalizeTag),
+            notes: importedNotes.map(normalizeNote),
+            snippets: importedSnippets.map(normalizeSnippet),
+            bookmarks: importedBookmarks.map(normalizeBookmark),
+            cheatsheets: importedCheatsheets.map(normalizeCheatSheet),
           });
 
           state.activeTab = "notes";
@@ -175,15 +182,20 @@ export const SettingsImportController = {
             /- Tag:\s*(.+?)\s*\(ID:\s*(.+?)\)\s*\*\*Entity Type:\*\*\s*(.+)/,
           );
           if (match) {
-            tags.push({
-              id: match[2].trim(),
-              name: match[1].trim(),
-              entityType: match[3].trim(),
-            });
+            tags.push(
+              normalizeTag({
+                id: match[2].trim(),
+                name: match[1].trim(),
+                entityType: match[3].trim() === "none" ? null : match[3].trim(),
+              }),
+            );
           }
         });
       }
     }
+
+    const cleanDate = (str) =>
+      str ? str.replace(/⏰/g, "").trim() : undefined;
 
     // 1. NOTES
     const notesSection = mdContent
@@ -197,20 +209,38 @@ export const SettingsImportController = {
         const catMatch = block.match(/- \*\*Category:\*\*\s*(.+)/);
         const pinnedMatch = block.match(/- \*\*Pinned:\*\*\s*(.+)/);
         const tagsMatch = block.match(/- \*\*Tags:\*\*\s*(.+)/);
-        const contentMatch = block.split(/#### Content:\n/)[1];
+        const createdMatch = block.match(/- \*\*Created At:\*\*\s*(.+)/);
+        const updatedMatch = block.match(/- \*\*Updated At:\*\*\s*(.+)/);
+
+        let content = "";
+        const codeBlockMatch = block.match(
+          /#### Content:\n```[\w]*\n([\s\S]*?)\n```/,
+        );
+        if (codeBlockMatch) {
+          content = codeBlockMatch[1];
+        } else {
+          const rawContentSplit = block.split(/#### Content:\n/)[1];
+          if (rawContentSplit) {
+            content = rawContentSplit.split(/---\n/)[0].trim();
+          }
+        }
 
         if (titleIdMatch) {
-          notes.push({
-            id: titleIdMatch[2].trim(),
-            title: titleIdMatch[1].trim(),
-            category: catMatch ? catMatch[1].trim() : "general",
-            pinned: pinnedMatch ? pinnedMatch[1].trim() === "Yes" : false,
-            tagIds:
-              tagsMatch && tagsMatch[1] !== "None"
-                ? tagsMatch[1].split(",").map((t) => t.trim())
-                : [],
-            content: contentMatch ? contentMatch.trim() : "",
-          });
+          notes.push(
+            normalizeNote({
+              id: titleIdMatch[2].trim(),
+              title: titleIdMatch[1].trim(),
+              category: catMatch ? catMatch[1].trim() : "general",
+              pinned: pinnedMatch ? pinnedMatch[1].trim() === "Yes" : false,
+              tagIds:
+                tagsMatch && tagsMatch[1] !== "None"
+                  ? tagsMatch[1].split(",").map((t) => t.trim())
+                  : [],
+              createdAt: createdMatch ? cleanDate(createdMatch[1]) : undefined,
+              updatedAt: updatedMatch ? cleanDate(updatedMatch[1]) : undefined,
+              content: content,
+            }),
+          );
         }
       });
     }
@@ -228,22 +258,28 @@ export const SettingsImportController = {
         const pinnedMatch = block.match(/- \*\*Pinned:\*\*\s*(.+)/);
         const descMatch = block.match(/- \*\*Description:\*\*\s*(.+)/);
         const tagsMatch = block.match(/- \*\*Tags:\*\*\s*(.+)/);
+        const createdMatch = block.match(/- \*\*Created At:\*\*\s*(.+)/);
+        const updatedMatch = block.match(/- \*\*Updated At:\*\*\s*(.+)/);
         const codeMatch = block.match(/```[\w]*\n([\s\S]*?)\n```/);
 
         if (titleIdMatch) {
-          snippets.push({
-            id: titleIdMatch[2].trim(),
-            title: titleIdMatch[1].trim(),
-            category: langMatch ? langMatch[1].trim() : "text",
-            pinned: pinnedMatch ? pinnedMatch[1].trim() === "Yes" : false,
-            description:
-              descMatch && descMatch[1] !== "N/A" ? descMatch[1].trim() : "",
-            tagIds:
-              tagsMatch && tagsMatch[1] !== "None"
-                ? tagsMatch[1].split(",").map((t) => t.trim())
-                : [],
-            code: codeMatch ? codeMatch[1] : "",
-          });
+          snippets.push(
+            normalizeSnippet({
+              id: titleIdMatch[2].trim(),
+              title: titleIdMatch[1].trim(),
+              category: langMatch ? langMatch[1].trim() : "text",
+              pinned: pinnedMatch ? pinnedMatch[1].trim() === "Yes" : false,
+              description:
+                descMatch && descMatch[1] !== "N/A" ? descMatch[1].trim() : "",
+              tagIds:
+                tagsMatch && tagsMatch[1] !== "None"
+                  ? tagsMatch[1].split(",").map((t) => t.trim())
+                  : [],
+              createdAt: createdMatch ? cleanDate(createdMatch[1]) : undefined,
+              updatedAt: updatedMatch ? cleanDate(updatedMatch[1]) : undefined,
+              code: codeMatch ? codeMatch[1] : "",
+            }),
+          );
         }
       });
     }
@@ -263,25 +299,31 @@ export const SettingsImportController = {
         const pinnedMatch = block.match(/- \*\*Pinned:\*\*\s*(.+)/);
         const descMatch = block.match(/- \*\*Description:\*\*\s*(.+)/);
         const tagsMatch = block.match(/- \*\*Tags:\*\*\s*(.+)/);
+        const createdMatch = block.match(/- \*\*Created At:\*\*\s*(.+)/);
+        const updatedMatch = block.match(/- \*\*Updated At:\*\*\s*(.+)/);
 
         if (titleIdMatch) {
-          bookmarks.push({
-            id: titleIdMatch[2].trim(),
-            title: titleIdMatch[1].trim(),
-            url: urlMatch && urlMatch[1] !== "N/A" ? urlMatch[1].trim() : "",
-            domain:
-              domainMatch && domainMatch[1] !== "N/A"
-                ? domainMatch[1].trim()
-                : "",
-            category: catMatch ? catMatch[1].trim() : "general",
-            pinned: pinnedMatch ? pinnedMatch[1].trim() === "Yes" : false,
-            description:
-              descMatch && descMatch[1] !== "N/A" ? descMatch[1].trim() : "",
-            tagIds:
-              tagsMatch && tagsMatch[1] !== "None"
-                ? tagsMatch[1].split(",").map((t) => t.trim())
-                : [],
-          });
+          bookmarks.push(
+            normalizeBookmark({
+              id: titleIdMatch[2].trim(),
+              title: titleIdMatch[1].trim(),
+              url: urlMatch && urlMatch[1] !== "N/A" ? urlMatch[1].trim() : "",
+              domain:
+                domainMatch && domainMatch[1] !== "N/A"
+                  ? domainMatch[1].trim()
+                  : "",
+              category: catMatch ? catMatch[1].trim() : "general",
+              pinned: pinnedMatch ? pinnedMatch[1].trim() === "Yes" : false,
+              description:
+                descMatch && descMatch[1] !== "N/A" ? descMatch[1].trim() : "",
+              tagIds:
+                tagsMatch && tagsMatch[1] !== "None"
+                  ? tagsMatch[1].split(",").map((t) => t.trim())
+                  : [],
+              createdAt: createdMatch ? cleanDate(createdMatch[1]) : undefined,
+              updatedAt: updatedMatch ? cleanDate(updatedMatch[1]) : undefined,
+            }),
+          );
         }
       });
     }
@@ -297,6 +339,8 @@ export const SettingsImportController = {
         const pinnedMatch = block.match(/- \*\*Pinned:\*\*\s*(.+)/);
         const descMatch = block.match(/- \*\*Description:\*\*\s*(.+)/);
         const tagsMatch = block.match(/- \*\*Tags:\*\*\s*(.+)/);
+        const createdMatch = block.match(/- \*\*Created At:\*\*\s*(.+)/);
+        const updatedMatch = block.match(/- \*\*Updated At:\*\*\s*(.+)/);
 
         const items = [];
         const itemLines = block.match(/- \*\*(.+?)\*\*: (.*?) \(ID: (.+)\)/g);
@@ -316,19 +360,23 @@ export const SettingsImportController = {
         }
 
         if (titleIdMatch) {
-          cheatsheets.push({
-            id: titleIdMatch[2].trim(),
-            title: titleIdMatch[1].trim(),
-            category: catMatch ? catMatch[1].trim() : "general",
-            pinned: pinnedMatch ? pinnedMatch[1].trim() === "Yes" : false,
-            description:
-              descMatch && descMatch[1] !== "N/A" ? descMatch[1].trim() : "",
-            tagIds:
-              tagsMatch && tagsMatch[1] !== "None"
-                ? tagsMatch[1].split(",").map((t) => t.trim())
-                : [],
-            items,
-          });
+          cheatsheets.push(
+            normalizeCheatSheet({
+              id: titleIdMatch[2].trim(),
+              title: titleIdMatch[1].trim(),
+              category: catMatch ? catMatch[1].trim() : "general",
+              pinned: pinnedMatch ? pinnedMatch[1].trim() === "Yes" : false,
+              description:
+                descMatch && descMatch[1] !== "N/A" ? descMatch[1].trim() : "",
+              tagIds:
+                tagsMatch && tagsMatch[1] !== "None"
+                  ? tagsMatch[1].split(",").map((t) => t.trim())
+                  : [],
+              createdAt: createdMatch ? cleanDate(createdMatch[1]) : undefined,
+              updatedAt: updatedMatch ? cleanDate(updatedMatch[1]) : undefined,
+              items,
+            }),
+          );
         }
       });
     }

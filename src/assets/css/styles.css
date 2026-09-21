@@ -183,6 +183,13 @@ body {
     border-color 0.3s ease;
 }
 
+code {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace !important;
+  line-height: 1.6 !important;
+}
+
 input,
 select,
 textarea {

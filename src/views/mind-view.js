@@ -154,7 +154,9 @@ export const MindView = {
                   ></textarea>
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full">
+                <div
+                  class="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full"
+                >
                   <div
                     id="create-note-category-autocomplete"
                     class="flex-1 w-full min-w-0"
@@ -204,20 +206,71 @@ export const MindView = {
                 </div>
 
                 <div class="flex flex-col">
-                  <label
-                    for="create-snippet-code"
-                    class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                    >Code <span class="text-red-700">*</span></label
+                  <div class="mb-1.5 flex items-center justify-between px-3">
+                    <label
+                      for="create-snippet-code"
+                      class="text-xs font-semibold text-secondary"
+                    >
+                      Code <span class="text-red-700">*</span>
+                    </label>
+                  </div>
+
+                  <div
+                    class="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-surface transition-all focus-within:border-brand/80 focus-within:ring-1 focus-within:ring-brand/30 shadow-inner"
                   >
-                  <textarea
-                    id="create-snippet-code"
-                    rows="4"
-                    placeholder="Paste your code snippet here..."
-                    class="w-full font-mono text-sm scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
-                  ></textarea>
+                    <div
+                      class="flex items-center justify-between border-b border-border bg-surface-3/50 px-3.5 py-2"
+                    >
+                      <div class="flex items-center gap-1.5">
+                        <i class="ti ti-code text-brand text-base me-1"></i>
+                        <span
+                          class="font-mono text-[11px] font-medium text-muted"
+                          >snippet.code</span
+                        >
+                      </div>
+
+                      <div class="flex items-center gap-2">
+                        <input
+                          type="file"
+                          id="snippet-file-input"
+                          class="hidden"
+                          accept=".js,.jsx,.ts,.tsx,.vue,.svelte,.html,.css,.scss,.py,.go,.rs,.sh,.sql,.json,.dockerfile,.yml,.yaml,.md,.graphql,.gql,.conf,.cypher,.surrealql,.splunk"
+                        />
+
+                        <div
+                          id="snippet-file-loader"
+                          class="hidden items-center gap-1.5 text-xs text-brand animate-pulse"
+                        >
+                          <i class="ti ti-loader-2 animate-spin"></i>
+                          <span class="text-[11px]">Loading...</span>
+                        </div>
+
+                        <button
+                          type="button"
+                          id="btn-upload-snippet-file"
+                          class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-medium text-secondary hover:text-color hover:bg-surface-4 transition cursor-pointer active:scale-95"
+                          title="Upload file content"
+                        >
+                          <i class="ti ti-file-upload text-sm text-brand"></i>
+                          <span>Upload File</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <textarea
+                      id="create-snippet-code"
+                      rows="4"
+                      placeholder="// Paste or write your code here..."
+                      spellcheck="false"
+                      class="w-full min-h-30 bg-transparent p-3.5 font-mono text-sm leading-relaxed text-color placeholder:text-muted/60 focus:outline-none resize-y scrollbar-thin scrollbar-thumb-surface-3"
+                      style="tab-size: 2;"
+                    ></textarea>
+                  </div>
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full">
+                <div
+                  class="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full"
+                >
                   <div
                     id="create-snippet-category-autocomplete"
                     class="flex-1 w-full min-w-0"
@@ -286,7 +339,9 @@ export const MindView = {
                   ></textarea>
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full">
+                <div
+                  class="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full"
+                >
                   <div
                     id="create-bookmark-tags-combobox"
                     class="flex-1 w-full min-w-0"
@@ -331,7 +386,9 @@ export const MindView = {
                   ></textarea>
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full">
+                <div
+                  class="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full"
+                >
                   <div
                     id="create-cheatsheet-category-autocomplete"
                     class="flex-1 w-full min-w-0"

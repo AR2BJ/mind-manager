@@ -656,7 +656,7 @@ export const MindController = {
       document.removeEventListener("themeChanged", window.currentThemeListener);
     }
     window.currentThemeListener = () => {
-      AnalyticsController.dispatchRender();
+      this.refreshUI();
     };
     document.addEventListener("themeChanged", window.currentThemeListener);
   },

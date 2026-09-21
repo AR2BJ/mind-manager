@@ -6,11 +6,13 @@ import {
 import { MindService } from "@/services/mind.service.js";
 import { NotificationService } from "@/services/notification.service.js";
 import { StateManager } from "@/models/state.model.js";
+import { todayISO } from "@/utils/helpers.js";
 
 export const MindActionController = {
   init(mainController) {
     this.mainController = mainController;
     this.bindDynamicEvents();
+    this.setupSnippetCodeUX();
   },
 
   handleToggleNotePin(noteId) {
@@ -237,7 +239,33 @@ export const MindActionController = {
         return;
       }
 
-      // 6. EDIT MODAL TRIGGER
+      const copySnippetBtn = target.closest(".copy-snippet-btn");
+      if (copySnippetBtn) {
+        e.stopPropagation();
+        const snippetId = copySnippetBtn.dataset.copySnippetId;
+        const snippets = StateManager.getSnippets() || [];
+        const targetSnippet = snippets.find(
+          (s) => String(s.id) === String(snippetId),
+        );
+
+        if (targetSnippet && targetSnippet.code) {
+          this.handleCopyText(targetSnippet.code);
+        }
+        return;
+      }
+
+      // 6. DOWNLOAD BUTTON HANDLER
+      const downloadSnippetBtn = target.closest(".download-snippet-btn");
+      if (downloadSnippetBtn) {
+        e.stopPropagation();
+        const snippetId = downloadSnippetBtn.dataset.downloadSnippetId;
+        if (snippetId) {
+          this.handleDownloadSnippet(snippetId);
+        }
+        return;
+      }
+
+      // 7. EDIT MODAL TRIGGER
       const editBtn = target.closest(".edit-btn");
       if (editBtn) {
         e.stopPropagation();
@@ -254,7 +282,7 @@ export const MindActionController = {
         return;
       }
 
-      // 7. DELETE MODAL TRIGGER
+      // 8. DELETE MODAL TRIGGER
       const deleteBtn = target.closest(".delete-btn");
       if (deleteBtn) {
         e.stopPropagation();
@@ -271,7 +299,7 @@ export const MindActionController = {
         return;
       }
 
-      // 8. DIRECT DELETE ITEM HANDLER
+      // 9. DIRECT DELETE ITEM HANDLER
       const directDeleteBtn = target.closest(".direct-delete-btn");
       if (directDeleteBtn) {
         e.stopPropagation();
@@ -280,5 +308,143 @@ export const MindActionController = {
         return;
       }
     });
+  },
+
+  handleDownloadSnippet(snippetId) {
+    const snippets = StateManager.getSnippets() || [];
+    const targetSnippet = snippets.find(
+      (s) => String(s.id) === String(snippetId),
+    );
+
+    if (!targetSnippet || !targetSnippet.code) return;
+
+    const categories = StateManager.getCategories() || [];
+    const categoryData = categories.find(
+      (c) => String(c.id) === String(targetSnippet.category),
+    );
+
+    const rawTitle = targetSnippet.title || "untitled";
+    const snippetName = rawTitle.trim().toLowerCase().replace(/\s+/g, "-");
+
+    const today = todayISO();
+
+    const rawExt = categoryData?.format || "txt";
+    const extension = rawExt.replace(/^\./, "").toLowerCase();
+
+    const fileName = `${snippetName}_code_${today}.${extension}`;
+
+    const blob = new Blob([targetSnippet.code], {
+      type: "text/plain;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    NotificationService.show({
+      type: "success",
+      message: `File "${fileName}" downloaded successfully`,
+      icon: "ti-file-download",
+      duration: 3000,
+    });
+  },
+
+  setupSnippetCodeUX() {
+    const attachUX = (codeId, uploadBtnId, fileInputId, loaderId) => {
+      const codeTextarea = document.getElementById(codeId);
+      const uploadBtn = document.getElementById(uploadBtnId);
+      const fileInput = document.getElementById(fileInputId);
+      const loader = document.getElementById(loaderId);
+
+      if (codeTextarea) {
+        codeTextarea.addEventListener("keydown", (e) => {
+          if (e.key === "Tab") {
+            e.preventDefault();
+            const start = codeTextarea.selectionStart;
+            const end = codeTextarea.selectionEnd;
+
+            codeTextarea.value =
+              codeTextarea.value.substring(0, start) +
+              "  " +
+              codeTextarea.value.substring(end);
+
+            codeTextarea.selectionStart = codeTextarea.selectionEnd = start + 2;
+          }
+        });
+      }
+
+      if (uploadBtn && fileInput && codeTextarea) {
+        uploadBtn.addEventListener("click", () => {
+          fileInput.value = "";
+          fileInput.click();
+        });
+
+        fileInput.addEventListener("change", (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+
+          if (loader) loader.classList.remove("hidden");
+          uploadBtn.classList.add("hidden");
+
+          const reader = new FileReader();
+
+          reader.onload = (event) => {
+            codeTextarea.value = event.target?.result || "";
+
+            if (loader) loader.classList.add("hidden");
+            uploadBtn.classList.remove("hidden");
+
+            if (typeof NotificationService !== "undefined") {
+              NotificationService.show({
+                type: "success",
+                message: `File "${file.name}" loaded successfully`,
+                icon: "ti-file-check",
+                duration: 3000,
+              });
+            }
+          };
+
+          reader.onerror = () => {
+            if (loader) loader.classList.add("hidden");
+            uploadBtn.classList.remove("hidden");
+
+            if (typeof NotificationService !== "undefined") {
+              NotificationService.show({
+                type: "error",
+                message: "Failed to read file",
+                icon: "ti-alert-circle",
+                duration: 3000,
+              });
+            }
+          };
+
+          setTimeout(() => {
+            reader.readAsText(file);
+          }, 100);
+        });
+      }
+    };
+
+    // Create Form UX
+    attachUX(
+      "create-snippet-code",
+      "btn-upload-snippet-file",
+      "snippet-file-input",
+      "snippet-file-loader",
+    );
+
+    // Edit Modal UX
+    attachUX(
+      "edit-snippet-code",
+      "btn-upload-edit-snippet-file",
+      "edit-snippet-file-input",
+      "edit-snippet-file-loader",
+    );
   },
 };

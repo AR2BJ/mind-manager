@@ -61,10 +61,10 @@ export const InfoModalComponent = {
           <h4
             class="text-xs font-bold text-brand uppercase tracking-wider flex items-center gap-1 mb-1.5"
           >
-            <i class="ti ti-target text-sm lg:text-base"></i> Objectives & Progress Tracking
+            <i class="ti ti-notebook text-sm lg:text-base"></i> Notes & Rich Text
           </h4>
           <p class="text-xs text-secondary leading-relaxed">
-            Break down plans into quantifiable Objectives (Boolean, Numeric, or Milestones). Target values and current progress dynamically calculate the plan's overall completion percentage.
+            Create structured notes, code snippets, and ideas. Pin important notes to keep them accessible at the top of your workspace.
           </p>
         </div>
 
@@ -72,10 +72,10 @@ export const InfoModalComponent = {
           <h4
             class="text-xs font-bold text-blue-500/90 uppercase tracking-wider flex items-center gap-1 mb-1.5"
           >
-            <i class="ti ti-clipboard-list text-sm lg:text-base"></i> Execution Logs & Timeline
+            <i class="ti ti-code text-sm lg:text-base"></i> Code Snippets & Syntax
           </h4>
           <p class="text-xs text-secondary leading-relaxed">
-            Track daily or periodic progress using Logs. Record actual metric achievements, log notes, and review your timeline history to maintain consistency over time.
+            Store reusable code fragments categorized by programming languages or frameworks with clean formatting and one-click copy functionality.
           </p>
         </div>
 
@@ -83,10 +83,10 @@ export const InfoModalComponent = {
           <h4
             class="text-xs font-bold text-emerald-500/90 uppercase tracking-wider flex items-center gap-1 mb-1.5"
           >
-            <i class="ti ti-copy text-sm lg:text-base"></i> Templates (Baseline & Optimal)
+            <i class="ti ti-bookmark text-sm lg:text-base"></i> Bookmarks & External Links
           </h4>
           <p class="text-xs text-secondary leading-relaxed">
-            Define minimum (<kbd class="px-1.5 py-0.5 text-[10px] bg-surface border border-border rounded shadow-2xs">Baseline</kbd>) and stretch (<kbd class="px-1.5 py-0.5 text-[10px] bg-surface border border-border rounded shadow-2xs">Optimal</kbd>) targets in Templates. Click <strong>Use Template</strong> to generate new plans instantly.
+            Save essential links, documentation, and web resources with custom metadata and descriptions for quick reference.
           </p>
         </div>
 
@@ -94,10 +94,10 @@ export const InfoModalComponent = {
           <h4
             class="text-xs font-bold text-purple-500/90 uppercase tracking-wider flex items-center gap-1 mb-1.5"
           >
-            <i class="ti ti-chart-pie text-sm lg:text-base"></i> Visual Analytics & Insights
+            <i class="ti ti-file-text text-sm lg:text-base"></i> Interactive Cheatsheets
           </h4>
           <p class="text-xs text-secondary leading-relaxed">
-            Analyze your performance across different Categories using interactive Heatmaps, Category Progress Charts, and Trend Graphs in the Analytics view.
+            Build command line or short-key reference sheets with key-value pairs to fast-track your daily development workflow.
           </p>
         </div>
 
@@ -105,10 +105,10 @@ export const InfoModalComponent = {
           <h4
             class="text-xs font-bold text-amber-500/90 uppercase tracking-wider flex items-center gap-1 mb-1.5"
           >
-            <i class="ti ti-stack-3 text-sm lg:text-base"></i> Categorization
+            <i class="ti ti-tags text-sm lg:text-base"></i> Dynamic Tags & Scope Binding
           </h4>
           <p class="text-xs text-secondary leading-relaxed">
-            Organize plans into 8 core Categories. Press numbers <kbd class="px-1.5 py-0.5 text-[10px] bg-surface border border-border rounded shadow-2xs">0</kbd> through <kbd class="px-1.5 py-0.5 text-[10px] bg-surface border border-border rounded shadow-2xs">7</kbd> on your keyboard to rapidly filter items in Plans, Logs, or Templates views.
+            Organize knowledge using flexible tags. Tags dynamically adapt their scope (<kbd class="px-1.5 py-0.5 text-[10px] bg-surface border border-border rounded shadow-2xs">entityType</kbd>) and usage metrics based on assignments across entities.
           </p>
         </div>
 
@@ -116,10 +116,10 @@ export const InfoModalComponent = {
           <h4
             class="text-xs font-bold text-rose-500/90 uppercase tracking-wider flex items-center gap-1 mb-1.5"
           >
-            <i class="ti ti-database text-sm lg:text-base"></i> Data Management & Backups
+            <i class="ti ti-database text-sm lg:text-base"></i> Local Storage & Backup
           </h4>
           <p class="text-xs text-secondary leading-relaxed">
-            Your data is stored locally for max privacy. Use Settings to Export full JSON backups or Import previous states. The Purge Terminal allows safe system resets.
+            All items are persisted client-side in LocalStorage. Use Settings to export full JSON backups or sync state across sessions.
           </p>
         </div>
       </div>
