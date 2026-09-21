@@ -121,6 +121,43 @@ export const MindActionController = {
     });
   },
 
+  handleToggleAccordion(toggleHeaderEl) {
+    const accordionContainer = toggleHeaderEl.closest(
+      ".snippet-code-container",
+    );
+    if (!accordionContainer) return;
+
+    const accordionBody = accordionContainer.querySelector(".accordion-body");
+    const actionsGroup = accordionContainer.querySelector(
+      ".accordion-actions-group",
+    );
+    const chevronIcon = accordionContainer.querySelector(".chevron-btn i");
+
+    if (!accordionBody || !actionsGroup) return;
+
+    const isHidden = accordionBody.classList.contains("hidden");
+
+    if (isHidden) {
+      accordionBody.classList.remove("hidden");
+      actionsGroup.classList.remove("hidden");
+      actionsGroup.classList.add("flex");
+
+      if (chevronIcon) {
+        chevronIcon.classList.remove("ti-chevron-down");
+        chevronIcon.classList.add("ti-chevron-up");
+      }
+    } else {
+      accordionBody.classList.add("hidden");
+      actionsGroup.classList.add("hidden");
+      actionsGroup.classList.remove("flex");
+
+      if (chevronIcon) {
+        chevronIcon.classList.remove("ti-chevron-up");
+        chevronIcon.classList.add("ti-chevron-down");
+      }
+    }
+  },
+
   handleDirectDelete(itemId) {
     const activeTab = StateManager.getActiveTab() || "notes";
     const currentState = StateManager.getState();
@@ -230,7 +267,25 @@ export const MindActionController = {
         return;
       }
 
-      // 5. COPY BUTTON HANDLER
+      // 5. ACCORDION TOGGLE HANDLER
+      const accordionBtn = target.closest(".toggle-accordion-btn");
+      if (accordionBtn) {
+        if (
+          target.closest(".copy-snippet-btn") ||
+          target.closest(".download-snippet-btn")
+        ) {
+          return;
+        }
+
+        e.stopPropagation();
+        const snippetId = accordionBtn.dataset.snippetAccordionId;
+        if (snippetId) {
+          this.handleToggleAccordion(accordionBtn);
+        }
+        return;
+      }
+
+      // 6. COPY BUTTON HANDLER
       const copyBtn = target.closest(".copy-btn");
       if (copyBtn) {
         e.stopPropagation();
@@ -254,7 +309,7 @@ export const MindActionController = {
         return;
       }
 
-      // 6. DOWNLOAD BUTTON HANDLER
+      // 7. DOWNLOAD BUTTON HANDLER
       const downloadSnippetBtn = target.closest(".download-snippet-btn");
       if (downloadSnippetBtn) {
         e.stopPropagation();
@@ -265,7 +320,7 @@ export const MindActionController = {
         return;
       }
 
-      // 7. EDIT MODAL TRIGGER
+      // 8. EDIT MODAL TRIGGER
       const editBtn = target.closest(".edit-btn");
       if (editBtn) {
         e.stopPropagation();
@@ -282,7 +337,7 @@ export const MindActionController = {
         return;
       }
 
-      // 8. DELETE MODAL TRIGGER
+      // 9. DELETE MODAL TRIGGER
       const deleteBtn = target.closest(".delete-btn");
       if (deleteBtn) {
         e.stopPropagation();
@@ -299,7 +354,7 @@ export const MindActionController = {
         return;
       }
 
-      // 9. DIRECT DELETE ITEM HANDLER
+      // 10. DIRECT DELETE ITEM HANDLER
       const directDeleteBtn = target.closest(".direct-delete-btn");
       if (directDeleteBtn) {
         e.stopPropagation();

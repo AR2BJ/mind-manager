@@ -287,56 +287,73 @@ export const MindItemComponent = {
                   class="snippet-code-container relative mt-2 rounded-lg bg-surface border border-border/60 overflow-hidden font-mono text-xs shadow-inner"
                 >
                   <div
-                    class="flex items-center justify-between px-3 py-1.5 bg-surface-3 border-b border-border/40 text-[11px] text-slate-400 select-none"
+                    data-snippet-accordion-id="${snippet.id}"
+                    class="toggle-accordion-btn flex items-center justify-between px-3 py-2 bg-surface-3 border-b border-border/40 text-[11px] text-slate-400 select-none cursor-pointer hover:bg-surface-2 transition-colors"
                   >
                     <span
                       class="flex items-center gap-1.5 font-medium tracking-wider text-color"
                     >
-                      <i class="${categoryIcon} text-xs lg:text-sm pb-0.5"></i>
+                      <i class="${categoryIcon} text-xs lg:text-sm pb-0.75"></i>
                       <span class="text-[10px] lg:text-[11px]">
                         ${categoryFormat}
                       </span>
                     </span>
 
-                    <div class="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        data-copy-snippet-id="${snippet.id}"
-                        class="copy-snippet-btn inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-2/80 hover:bg-brand/20 hover:text-brand text-color transition-colors border border-border/50 cursor-pointer"
-                        title="Copy Code"
+                    <div class="flex items-center gap-2">
+                      <div
+                        class="accordion-actions-group hidden items-center gap-1.5"
                       >
-                        <i class="ti ti-copy text-xs pb-0.5"></i>
-                        <span>Copy</span>
-                      </button>
+                        <button
+                          type="button"
+                          data-copy-snippet-id="${snippet.id}"
+                          class="copy-snippet-btn inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-2/80 hover:bg-brand/20 hover:text-brand text-color transition-colors border border-border/50 cursor-pointer"
+                          title="Copy Code"
+                        >
+                          <i class="ti ti-copy text-xs pb-0.5"></i>
+                          <span>Copy</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          data-download-snippet-id="${snippet.id}"
+                          class="download-snippet-btn inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-2/80 hover:bg-brand/20 hover:text-brand text-color transition-colors border border-border/50 cursor-pointer"
+                          title="Download Code"
+                        >
+                          <i class="ti ti-download text-xs pb-0.5"></i>
+                          <span>Download</span>
+                        </button>
+                      </div>
 
                       <button
                         type="button"
-                        data-download-snippet-id="${snippet.id}"
-                        class="download-snippet-btn inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-2/80 hover:bg-brand/20 hover:text-brand text-color transition-colors border border-border/50 cursor-pointer"
-                        title="Download Code"
+                        class="chevron-btn text-slate-400 hover:text-color transition-transform duration-200 flex justify-center items-center"
                       >
-                        <i class="ti ti-download text-xs pb-0.5"></i>
-                        <span>Download</span>
+                        <i class="ti ti-chevron-down text-sm lg:text-lg"></i>
                       </button>
                     </div>
                   </div>
 
                   <div
-                    class="code-scroll-wrapper relative flex overflow-x-auto max-h-70 p-3 select-text"
+                    id="accordion-body-${snippet.id}"
+                    class="accordion-body hidden border-t border-border/40"
                   >
                     <div
-                      class="line-numbers-col h-full shrink-0 flex flex-col pr-3 mr-3 border-r border-slate-700/60 select-none text-right text-slate-500 font-mono text-[12px] leading-[1.6]"
+                      class="code-scroll-wrapper relative flex overflow-x-auto max-h-70 p-3 select-text"
                     >
-                      ${lineNumbersHtml}
-                    </div>
+                      <div
+                        class="line-numbers-col h-full shrink-0 flex flex-col pr-3 mr-3 border-r border-slate-700/60 select-none text-right text-slate-500 font-mono text-[12px] leading-[1.6]"
+                      >
+                        ${lineNumbersHtml}
+                      </div>
 
-                    <div
-                      data-shiki-id="${snippet.id}"
-                      class="shiki-container code-content-col flex-1 font-mono text-[12px] leading-[1.6]"
-                    >
-                      <pre
-                        class="m-0 p-0 bg-transparent text-slate-200 font-mono whitespace-pre"
-                      ><code>${snippet.code}</code></pre>
+                      <div
+                        data-shiki-id="${snippet.id}"
+                        class="shiki-container code-content-col flex-1 font-mono text-[12px] leading-[1.6]"
+                      >
+                        <pre
+                          class="m-0 p-0 bg-transparent text-slate-200 font-mono whitespace-pre"
+                        ><code>${snippet.code}</code></pre>
+                      </div>
                     </div>
                   </div>
                 </div>
