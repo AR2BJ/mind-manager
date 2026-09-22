@@ -874,6 +874,12 @@ export const SORT_OPTIONS_BY_TAB = {
       icon: "ti ti-sort-ascending text-emerald-500/80",
       class: "bg-emerald-500/10 text-emerald-500/80 border-emerald-500/20",
     },
+    {
+      value: "title_desc",
+      title: "Title (Z-A)",
+      icon: "ti ti-sort-descending text-red-500/80",
+      class: "bg-red-500/10 text-red-500/80 border-red-500/20",
+    },
   ],
   snippets: [
     {
@@ -893,6 +899,12 @@ export const SORT_OPTIONS_BY_TAB = {
       title: "Title (A-Z)",
       icon: "ti ti-sort-ascending text-emerald-500/80",
       class: "bg-emerald-500/10 text-emerald-500/80 border-emerald-500/20",
+    },
+    {
+      value: "title_desc",
+      title: "Title (Z-A)",
+      icon: "ti ti-sort-descending text-red-500/80",
+      class: "bg-red-500/10 text-red-500/80 border-red-500/20",
     },
   ],
   bookmarks: [
@@ -914,6 +926,12 @@ export const SORT_OPTIONS_BY_TAB = {
       icon: "ti ti-sort-ascending text-emerald-500/80",
       class: "bg-emerald-500/10 text-emerald-500/80 border-emerald-500/20",
     },
+    {
+      value: "title_desc",
+      title: "Title (Z-A)",
+      icon: "ti ti-sort-descending text-red-500/80",
+      class: "bg-red-500/10 text-red-500/80 border-red-500/20",
+    },
   ],
   cheatsheets: [
     {
@@ -921,6 +939,12 @@ export const SORT_OPTIONS_BY_TAB = {
       title: "Title (A-Z)",
       icon: "ti ti-sort-ascending text-emerald-500/80",
       class: "bg-emerald-500/10 text-emerald-500/80 border-emerald-500/20",
+    },
+    {
+      value: "title_desc",
+      title: "Title (Z-A)",
+      icon: "ti ti-sort-descending text-red-500/80",
+      class: "bg-red-500/10 text-red-500/80 border-red-500/20",
     },
     {
       value: "updated_desc",

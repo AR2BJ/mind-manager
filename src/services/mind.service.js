@@ -4,20 +4,11 @@ import {
   normalizeNote,
   normalizeSnippet,
 } from "@/models/storage.model";
-
-import { todayISO } from "@/utils/helpers.js";
-
-function sanitizeTagIds(tags) {
-  if (!Array.isArray(tags)) return [];
-  return tags
-    .map((tag) => {
-      if (typeof tag === "object" && tag !== null) {
-        return String(tag.id || tag.value || "");
-      }
-      return String(tag || "").trim();
-    })
-    .filter(Boolean);
-}
+import {
+  sanitizeTagIds,
+  todayISO,
+  validateAndNormalizeUrl,
+} from "@/utils/helpers.js";
 
 export const MindService = {
   // ==========================================
@@ -76,11 +67,25 @@ export const MindService = {
   },
 
   toggleNotePin(currentNotes = [], noteId) {
+    const targetNote = currentNotes.find(
+      (n) => String(n.id) === String(noteId),
+    );
+    if (!targetNote) throw new Error("Note not found");
+
+    const isPinning = !targetNote.pinned;
+
+    if (isPinning) {
+      const pinCount = currentNotes.filter((n) => n.pinned === true).length;
+      if (pinCount >= 4) {
+        throw new Error("Maximum limit reached: Only 4 notes can be pinned");
+      }
+    }
+
     return currentNotes.map((n) => {
       if (String(n.id) !== String(noteId)) return n;
       return {
         ...n,
-        pinned: !n.pinned,
+        pinned: isPinning,
         updatedAt: todayISO(),
       };
     });
@@ -154,11 +159,25 @@ export const MindService = {
   },
 
   toggleSnippetPin(currentSnippets = [], snippetId) {
+    const targetSnippet = currentSnippets.find(
+      (s) => String(s.id) === String(snippetId),
+    );
+    if (!targetSnippet) throw new Error("Snippet not found");
+
+    const isPinning = !targetSnippet.pinned;
+
+    if (isPinning) {
+      const pinCount = currentSnippets.filter((s) => s.pinned === true).length;
+      if (pinCount >= 4) {
+        throw new Error("Maximum limit reached: Only 4 snippets can be pinned");
+      }
+    }
+
     return currentSnippets.map((s) => {
       if (String(s.id) !== String(snippetId)) return s;
       return {
         ...s,
-        pinned: !s.pinned,
+        pinned: isPinning,
         updatedAt: todayISO(),
       };
     });
@@ -187,17 +206,14 @@ export const MindService = {
       throw new Error("An active bookmark with this title already exists");
     }
 
-    const rawUrl = (bookmarkData.url || "").trim();
-    if (!rawUrl) {
-      throw new Error("URL is required for bookmark");
-    }
+    const validUrl = validateAndNormalizeUrl(bookmarkData.url);
 
     const parsedTagIds = sanitizeTagIds(bookmarkData.tagIds);
 
     const payload = normalizeBookmark({
       ...bookmarkData,
       title: cleanedTitle,
-      url: rawUrl,
+      url: validUrl,
       tagIds: parsedTagIds,
       createdAt: todayISO(),
       updatedAt: todayISO(),
@@ -220,6 +236,11 @@ export const MindService = {
       }
     }
 
+    let validUrl = bookmark.url;
+    if (updatedFields.url !== undefined) {
+      validUrl = validateAndNormalizeUrl(updatedFields.url);
+    }
+
     return currentBookmarks.map((b) => {
       if (String(b.id) !== String(bookmarkId)) return b;
 
@@ -227,17 +248,34 @@ export const MindService = {
         ...b,
         ...updatedFields,
         title: cleanedTitle,
+        url: validUrl,
         updatedAt: todayISO(),
       });
     });
   },
 
   toggleBookmarkPin(currentBookmarks = [], bookmarkId) {
+    const targetBookmark = currentBookmarks.find(
+      (b) => String(b.id) === String(bookmarkId),
+    );
+    if (!targetBookmark) throw new Error("Bookmark not found");
+
+    const isPinning = !targetBookmark.pinned;
+
+    if (isPinning) {
+      const pinCount = currentBookmarks.filter((b) => b.pinned === true).length;
+      if (pinCount >= 4) {
+        throw new Error(
+          "Maximum limit reached: Only 4 bookmarks can be pinned",
+        );
+      }
+    }
+
     return currentBookmarks.map((b) => {
       if (String(b.id) !== String(bookmarkId)) return b;
       return {
         ...b,
-        pinned: !b.pinned,
+        pinned: isPinning,
         updatedAt: todayISO(),
       };
     });
@@ -311,11 +349,29 @@ export const MindService = {
   },
 
   toggleCheatSheetPin(currentCheatSheets = [], sheetId) {
+    const targetSheet = currentCheatSheets.find(
+      (s) => String(s.id) === String(sheetId),
+    );
+    if (!targetSheet) throw new Error("CheatSheet not found");
+
+    const isPinning = !targetSheet.pinned;
+
+    if (isPinning) {
+      const pinCount = currentCheatSheets.filter(
+        (s) => s.pinned === true,
+      ).length;
+      if (pinCount >= 4) {
+        throw new Error(
+          "Maximum limit reached: Only 4 cheatsheets can be pinned",
+        );
+      }
+    }
+
     return currentCheatSheets.map((s) => {
       if (String(s.id) !== String(sheetId)) return s;
       return {
         ...s,
-        pinned: !s.pinned,
+        pinned: isPinning,
         updatedAt: todayISO(),
       };
     });

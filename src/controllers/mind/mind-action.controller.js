@@ -3,6 +3,7 @@ import {
   setPendingEditId,
 } from "./mind-form.controller.js";
 
+import { GlobalLoaderService } from "@/services/loader.service.js";
 import { MindService } from "@/services/mind.service.js";
 import { NotificationService } from "@/services/notification.service.js";
 import { StateManager } from "@/models/state.model.js";
@@ -17,109 +18,156 @@ export const MindActionController = {
   },
 
   handleToggleNotePin(noteId) {
-    const notes = StateManager.getNotes() || [];
-    const targetNote = notes.find((n) => String(n.id) === String(noteId));
-    if (!targetNote) return;
+    GlobalLoaderService.show(`Pinned note...`);
 
-    const updatedNotes = MindService.toggleNotePin(notes, noteId);
-    StateManager.save({ notes: updatedNotes });
+    setTimeout(() => {
+      try {
+        const notes = StateManager.getNotes() || [];
+        const targetNote = notes.find((n) => String(n.id) === String(noteId));
+        if (!targetNote) return;
 
-    if (
-      this.mainController &&
-      typeof this.mainController.refreshUI === "function"
-    ) {
-      this.mainController.refreshUI();
-    }
+        const updatedNotes = MindService.toggleNotePin(notes, noteId);
+        StateManager.save({ notes: updatedNotes });
 
-    NotificationService.show({
-      type: "info",
-      message: !targetNote.pinned ? "Note pinned" : "Note unpinned",
-      icon: !targetNote.pinned ? "ti-pinned-filled" : "ti-pin",
-      duration: 5000,
-    });
+        this.mainController.refreshUI();
+
+        NotificationService.show({
+          type: "info",
+          message: !targetNote.pinned ? "Note pinned" : "Note unpinned",
+          icon: !targetNote.pinned ? "ti-pinned-filled" : "ti-pin",
+          duration: 5000,
+        });
+      } catch (error) {
+        NotificationService.show({
+          type: "error",
+          message: error.message || "Failed to pinned note",
+          icon: "ti-alert-triangle",
+          duration: 5000,
+        });
+      } finally {
+        GlobalLoaderService.hide();
+      }
+    }, 30);
   },
 
   handleToggleSnippetPin(snippetId) {
-    const snippets = StateManager.getSnippets() || [];
-    const targetSnippet = snippets.find(
-      (s) => String(s.id) === String(snippetId),
-    );
-    if (!targetSnippet) return;
+    GlobalLoaderService.show(`Pinned snippet...`);
 
-    const updatedSnippets = MindService.toggleSnippetPin(snippets, snippetId);
-    StateManager.save({ snippets: updatedSnippets });
+    setTimeout(() => {
+      try {
+        const snippets = StateManager.getSnippets() || [];
+        const targetSnippet = snippets.find(
+          (s) => String(s.id) === String(snippetId),
+        );
+        if (!targetSnippet) return;
 
-    if (
-      this.mainController &&
-      typeof this.mainController.refreshUI === "function"
-    ) {
-      this.mainController.refreshUI();
-    }
+        const updatedSnippets = MindService.toggleSnippetPin(
+          snippets,
+          snippetId,
+        );
+        StateManager.save({ snippets: updatedSnippets });
 
-    NotificationService.show({
-      type: "info",
-      message: !targetSnippet.pinned ? "Snippet pinned" : "Snippet unpinned",
-      icon: !targetSnippet.pinned ? "ti-pinned-filled" : "ti-pin",
-      duration: 5000,
-    });
+        this.mainController.refreshUI();
+
+        NotificationService.show({
+          type: "info",
+          message: !targetSnippet.pinned
+            ? "Snippet pinned"
+            : "Snippet unpinned",
+          icon: !targetSnippet.pinned ? "ti-pinned-filled" : "ti-pin",
+          duration: 5000,
+        });
+      } catch (error) {
+        NotificationService.show({
+          type: "error",
+          message: error.message || "Failed to pinned snippet",
+          icon: "ti-alert-triangle",
+          duration: 5000,
+        });
+      } finally {
+        GlobalLoaderService.hide();
+      }
+    }, 30);
   },
 
   handleToggleBookmarkPin(bookmarkId) {
-    const bookmarks = StateManager.getBookmarks() || [];
-    const targetBookmark = bookmarks.find(
-      (b) => String(b.id) === String(bookmarkId),
-    );
-    if (!targetBookmark) return;
+    GlobalLoaderService.show(`Pinned bookmark...`);
 
-    const updatedBookmarks = MindService.toggleBookmarkPin(
-      bookmarks,
-      bookmarkId,
-    );
-    StateManager.save({ bookmarks: updatedBookmarks });
+    setTimeout(() => {
+      try {
+        const bookmarks = StateManager.getBookmarks() || [];
+        const targetBookmark = bookmarks.find(
+          (b) => String(b.id) === String(bookmarkId),
+        );
+        if (!targetBookmark) return;
 
-    if (
-      this.mainController &&
-      typeof this.mainController.refreshUI === "function"
-    ) {
-      this.mainController.refreshUI();
-    }
+        const updatedBookmarks = MindService.toggleBookmarkPin(
+          bookmarks,
+          bookmarkId,
+        );
+        StateManager.save({ bookmarks: updatedBookmarks });
 
-    NotificationService.show({
-      type: "info",
-      message: !targetBookmark.pinned ? "Bookmark pinned" : "Bookmark unpinned",
-      icon: !targetBookmark.pinned ? "ti-pinned-filled" : "ti-pin",
-      duration: 5000,
-    });
+        this.mainController.refreshUI();
+
+        NotificationService.show({
+          type: "info",
+          message: !targetBookmark.pinned
+            ? "Bookmark pinned"
+            : "Bookmark unpinned",
+          icon: !targetBookmark.pinned ? "ti-pinned-filled" : "ti-pin",
+          duration: 5000,
+        });
+      } catch (error) {
+        NotificationService.show({
+          type: "error",
+          message: error.message || "Failed to pinned bookmark",
+          icon: "ti-alert-triangle",
+          duration: 5000,
+        });
+      } finally {
+        GlobalLoaderService.hide();
+      }
+    }, 30);
   },
 
   handleToggleCheatSheetPin(sheetId) {
-    const cheatsheets = StateManager.getCheatSheets() || [];
-    const targetSheet = cheatsheets.find(
-      (s) => String(s.id) === String(sheetId),
-    );
-    if (!targetSheet) return;
+    GlobalLoaderService.show(`Pinned cheatsheet...`);
 
-    const updatedCheatSheets = MindService.toggleCheatSheetPin(
-      cheatsheets,
-      sheetId,
-    );
-    StateManager.save({ cheatsheets: updatedCheatSheets });
+    setTimeout(() => {
+      try {
+        const cheatsheets = StateManager.getCheatSheets() || [];
+        const targetSheet = cheatsheets.find(
+          (s) => String(s.id) === String(sheetId),
+        );
+        if (!targetSheet) return;
 
-    if (
-      this.mainController &&
-      typeof this.mainController.refreshUI === "function"
-    ) {
-      this.mainController.refreshUI();
-    }
+        const updatedCheatSheets = MindService.toggleCheatSheetPin(
+          cheatsheets,
+          sheetId,
+        );
+        StateManager.save({ cheatsheets: updatedCheatSheets });
 
-    NotificationService.show({
-      type: "info",
-      message: !targetSheet.pinned
-        ? "CheatSheet pinned"
-        : "CheatSheet unpinned",
-      icon: !targetSheet.pinned ? "ti-pinned-filled" : "ti-pin",
-      duration: 5000,
-    });
+        this.mainController.refreshUI();
+
+        NotificationService.show({
+          type: "info",
+          message: !targetSheet.pinned
+            ? "CheatSheet pinned"
+            : "CheatSheet unpinned",
+          icon: !targetSheet.pinned ? "ti-pinned-filled" : "ti-pin",
+          duration: 5000,
+        });
+      } catch (error) {
+        NotificationService.show({
+          type: "error",
+          message: error.message || "Failed to pinned cheatsheet",
+          icon: "ti-alert-triangle",
+          duration: 5000,
+        });
+      } finally {
+        GlobalLoaderService.hide();
+      }
+    }, 30);
   },
 
   handleToggleAccordion(toggleHeaderEl) {
@@ -186,12 +234,7 @@ export const MindActionController = {
       StateManager.save({ cheatsheets });
     }
 
-    if (
-      this.mainController &&
-      typeof this.mainController.refreshUI === "function"
-    ) {
-      this.mainController.refreshUI();
-    }
+    this.mainController.refreshUI();
 
     NotificationService.show({
       type: "info",

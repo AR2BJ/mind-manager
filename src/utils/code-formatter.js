@@ -9,6 +9,12 @@ function mapCategoryToLanguage(categoryId) {
   return cat ? LANG_ALIAS[cat] : "";
 }
 
+export function checkIsShortCode(rawCode, maxLines = 10) {
+  if (!rawCode) return true;
+  const lineCount = rawCode.split("\n").length;
+  return lineCount <= maxLines;
+}
+
 export function getLineNumbersHtml(rawCode) {
   if (!rawCode) return "";
   const lines = rawCode.split("\n");

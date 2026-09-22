@@ -62,11 +62,9 @@ export const FullscreenModalComponent = {
             </div>
           </div>
 
-          <div
-            class="flex-1 min-h-0 pt-4"
-          >
+          <div class="flex-1 min-h-0 pt-4">
             <div
-              class="relative flex overflow-auto scrollbar-thin scrollbar-thumb-surface-2 max-h-full p-4 rounded-xl bg-surface-2/60 border border-border/60 font-mono text-xs select-text zoom-140"
+              class="relative flex overflow-auto scrollbar-thin scrollbar-thumb-surface-4 max-h-full p-4 rounded-xl bg-surface-2/60 border border-border/60 font-mono text-xs select-text zoom-140"
             >
               <div
                 id="fullscreen-modal-line-numbers"

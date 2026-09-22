@@ -39,14 +39,60 @@ export function todayISO() {
   return formatDate(new Date());
 }
 
+export function validateAndNormalizeUrl(rawUrl) {
+  const trimmed = (rawUrl || "").trim();
+
+  if (!trimmed) {
+    throw new Error("URL is required for bookmark");
+  }
+
+  // Reject strings without a dot or proper domain structure (e.g., plain words/gibberish)
+  const urlPattern = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/.*)?$/i;
+
+  if (!urlPattern.test(trimmed)) {
+    throw new Error(
+      "Invalid URL format. Please enter a valid web address (e.g., https://example.com)",
+    );
+  }
+
+  try {
+    // If it lacks http/https, prepend it for URL constructor validation
+    const targetUrl = /^https?:\/\//i.test(trimmed)
+      ? trimmed
+      : `https://${trimmed}`;
+    const parsed = new URL(targetUrl);
+
+    // Ensure host actually contains a domain extension
+    if (!parsed.hostname.includes(".")) {
+      throw new Error("Invalid domain name");
+    }
+
+    return parsed.href;
+  } catch (err) {
+    throw new Error(
+      "Invalid URL format. Please enter a valid web address (e.g., https://example.com)",
+    );
+  }
+}
+
+export function sanitizeTagIds(tags) {
+  if (!Array.isArray(tags)) return [];
+  return tags
+    .map((tag) => {
+      if (typeof tag === "object" && tag !== null) {
+        return String(tag.id || tag.value || "");
+      }
+      return String(tag || "").trim();
+    })
+    .filter(Boolean);
+}
+
 export function mapTagIdsToObjects(tagIds = [], globalTags = []) {
   if (!Array.isArray(tagIds)) return [];
   return tagIds
     .map((id) => globalTags.find((t) => t.id === id))
     .filter(Boolean);
 }
-
-// utils/helpers.js
 
 export function processTagPipeline(
   componentItems = [],
@@ -79,13 +125,16 @@ export function processTagPipeline(
       const newTag = {
         id: generateId(),
         name: itemTitle.trim(),
-        entityType: entityType,
+        entityTypes: entityType ? [entityType] : [],
       };
       updatedGlobalTags.push(newTag);
       assignedTagIds.push(newTag.id);
     } else if (match) {
-      if (!match.entityType && entityType) {
-        match.entityType = entityType;
+      if (!Array.isArray(match.entityTypes)) {
+        match.entityTypes = [];
+      }
+      if (entityType && !match.entityTypes.includes(entityType)) {
+        match.entityTypes.push(entityType);
       }
       assignedTagIds.push(match.id);
     }
@@ -109,8 +158,12 @@ export function syncTagEntityTypes(
   );
 
   return tags.map((tag) => {
-    if (tag.entityType === entityType && !activeTagIdsInEntity.has(tag.id)) {
-      return { ...tag, entityType: null };
+    const entityTypes = Array.isArray(tag.entityTypes) ? tag.entityTypes : [];
+    if (entityTypes.includes(entityType) && !activeTagIdsInEntity.has(tag.id)) {
+      return {
+        ...tag,
+        entityTypes: entityTypes.filter((et) => et !== entityType),
+      };
     }
     return tag;
   });

@@ -1035,12 +1035,7 @@ export const MindFormController = {
 
           this.resetForms();
 
-          if (
-            this.mainController &&
-            typeof this.mainController.refreshUI === "function"
-          ) {
-            this.mainController.refreshUI();
-          }
+          this.mainController.refreshUI();
 
           const type = activeTab.slice(0, activeTab.length - 1);
 

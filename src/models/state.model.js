@@ -12,6 +12,13 @@ import {
 
 import { eventBus } from "@/services/event-bus.service.js";
 
+const CATEGORY_MAP = {
+  notes: NOTE_CATEGORIES,
+  snippets: SNIPPET_CATEGORIES,
+  bookmarks: BOOKMARK_CATEGORIES,
+  cheatsheets: CHEATSHEET_CATEGORIES,
+};
+
 export const state = {
   tags: [],
   notes: [],
@@ -61,25 +68,15 @@ export const StateManager = {
 
   reloadFromStorage(notify = true) {
     const saved = loadFromStorage();
-    if (saved) {
-      state.tags = saved.tags || [];
-      state.notes = saved.notes || [];
-      state.snippets = saved.snippets || [];
-      state.bookmarks = saved.bookmarks || [];
-      state.cheatsheets = saved.cheatsheets || [];
-    } else {
-      state.tags = [];
-      state.notes = [];
-      state.snippets = [];
-      state.bookmarks = [];
-      state.cheatsheets = [];
-    }
+    const entities = ["tags", "notes", "snippets", "bookmarks", "cheatsheets"];
+
+    entities.forEach((entity) => {
+      state[entity] = saved?.[entity] || [];
+    });
 
     this._rawCache = localStorage.getItem(STORAGE_KEY) || "";
 
-    if (notify) {
-      this.dispatchStateEvents();
-    }
+    if (notify) this.dispatchStateEvents();
   },
 
   dispatchStateEvents() {
@@ -134,13 +131,7 @@ export const StateManager = {
   },
 
   getCategories() {
-    const tab = state.activeTab;
-
-    if (tab === "notes") return NOTE_CATEGORIES || [];
-    if (tab === "snippets") return SNIPPET_CATEGORIES || [];
-    if (tab === "bookmarks") return BOOKMARK_CATEGORIES || [];
-    if (tab === "cheatsheets") return CHEATSHEET_CATEGORIES || [];
-    return [];
+    return CATEGORY_MAP[state.activeTab] || [];
   },
 
   getActiveUIState() {
@@ -152,98 +143,153 @@ export const StateManager = {
     return state.analyticsUI?.heatmapView || "weekly";
   },
 
+  /**
+   * Generic Universal Data Filtering Engine for all Entities
+   */
   getFilteredDataForActiveTab() {
     const tab = state.activeTab;
     const ui = this.getActiveUIState();
 
-    let list = [];
-    if (tab === "notes") list = [...state.notes];
-    else if (tab === "snippets") list = [...state.snippets];
-    else if (tab === "bookmarks") list = [...state.bookmarks];
-    else if (tab === "cheatsheets") list = [...state.cheatsheets];
+    let list = Array.isArray(state[tab]) ? [...state[tab]] : [];
+    if (!list.length) return [];
 
-    if (!Array.isArray(list)) return [];
-
-    // Filter by Category
-    if (ui.selectedCategory && ui.selectedCategory !== "all") {
+    // 1. Filter by Category
+    if (ui.selectedCategory && ui.selectedCategory !== "all")
       list = list.filter(
         (item) => String(item.category) === String(ui.selectedCategory),
       );
-    }
 
-    // Filter by Custom Flags (Pinned, Favorites)
-    if (ui.filterBy && ui.filterBy !== "all") {
-      list = this.filterItemsByTab(list, tab, ui.filterBy);
-    }
+    // 2. Filter by Flags (Pinned/Unpinned)
+    if (ui.filterBy && ui.filterBy !== "all")
+      list = this.filterItemsByFlag(list, ui.filterBy);
 
-    // Search Query
-    if (ui.searchQuery && ui.searchQuery.trim() !== "") {
-      const query = ui.searchQuery.toLowerCase().trim();
-      const globalTagsMap = new Map(
-        (state.tags || []).map((t) => [t.id, t.name.toLowerCase()]),
-      );
+    // 3. Multi-Word Global Entity Search Engine
+    if (ui.searchQuery && ui.searchQuery.trim() !== "")
+      list = this.searchItems(list, ui.searchQuery);
 
-      list = list.filter((item) => {
-        const titleMatch = (item.title || "").toLowerCase().includes(query);
-        const descMatch = (item.description || "")
-          .toLowerCase()
-          .includes(query);
-        const contentMatch = (item.content || "").toLowerCase().includes(query);
-        const codeMatch = (item.code || "").toLowerCase().includes(query);
-        const urlMatch = (item.url || "").toLowerCase().includes(query);
-
-        const tagMatch =
-          Array.isArray(item.tagIds) &&
-          item.tagIds.some((tagId) => {
-            const tagName = globalTagsMap.get(tagId);
-            return tagName ? tagName.includes(query) : false;
-          });
-
-        return (
-          titleMatch ||
-          descMatch ||
-          contentMatch ||
-          codeMatch ||
-          urlMatch ||
-          tagMatch
-        );
-      });
-    }
-
-    return this.sortItemsByTab(list, ui.sortBy);
+    // 4. Universal Sorting
+    return this.sortItems(list, ui.sortBy);
   },
 
-  filterItemsByTab(items, tab, filterValue) {
+  filterItemsByFlag(items, filterValue) {
     return items.filter((item) => {
-      if (tab === "notes") {
-        if (filterValue === "pinned") return Boolean(item.pinned);
-        if (filterValue === "unpinned") return !item.pinned;
-      }
-
-      if (tab === "snippets") {
-        if (filterValue === "pinned") return Boolean(item.pinned);
-        if (filterValue === "unpinned") return !item.pinned;
-      }
-
-      if (tab === "bookmarks") {
-        if (filterValue === "pinned") return Boolean(item.pinned);
-        if (filterValue === "unpinned") return !item.pinned;
-      }
-
-      if (tab === "cheatsheets") {
-        if (filterValue === "pinned") return Boolean(item.pinned);
-        if (filterValue === "unpinned") return !item.pinned;
-      }
-
+      if (filterValue === "pinned") return Boolean(item.pinned);
+      if (filterValue === "unpinned") return !item.pinned;
       return true;
     });
   },
 
-  sortItemsByTab(items, sortBy) {
+  searchItems(items, query) {
+    const rawQuery = query.toLowerCase().trim();
+
+    const exactPhrases = [];
+    const phraseRegex = /"([^"]+)"/g;
+    let match;
+
+    while ((match = phraseRegex.exec(rawQuery)) !== null) {
+      if (match[1]) exactPhrases.push(match[1].trim());
+    }
+
+    const cleanQuery = rawQuery.replace(phraseRegex, "").trim();
+    const tokens = cleanQuery.split(/\s+/).filter(Boolean);
+
+    const globalTagsMap = new Map(
+      (state.tags || []).map((t) => [t.id, (t.name || "").toLowerCase()]),
+    );
+
+    return items
+      .map((item) => {
+        let score = 0;
+
+        const title = (item.title || "").toLowerCase();
+        const desc = (item.description || "").toLowerCase();
+        const content = (item.content || "").toLowerCase();
+        const code = (item.code || "").toLowerCase();
+        const url = (item.url || "").toLowerCase();
+        const domain = (item.domain || "").toLowerCase();
+
+        const createdAt = String(
+          item.createdAt || item.created_at || "",
+        ).toLowerCase();
+
+        const itemTagNames = Array.isArray(item.tagIds)
+          ? item.tagIds.map((id) => globalTagsMap.get(id) || "").filter(Boolean)
+          : [];
+
+        const cheatsheetContent = Array.isArray(item.items)
+          ? item.items
+              .map(
+                (i) => `${i.key || ""} ${i.value || ""} ${i.description || ""}`,
+              )
+              .join(" ")
+              .toLowerCase()
+          : "";
+
+        const passesExact = exactPhrases.every((phrase) => {
+          return (
+            title.includes(phrase) ||
+            desc.includes(phrase) ||
+            content.includes(phrase) ||
+            code.includes(phrase) ||
+            url.includes(phrase) ||
+            domain.includes(phrase) ||
+            createdAt.includes(phrase) ||
+            cheatsheetContent.includes(phrase)
+          );
+        });
+
+        if (!passesExact) return { item, score: -1, matchesAllTokens: false };
+
+        const matchesAllTokens = tokens.every((token) => {
+          if (token.startsWith("#")) {
+            const tagToken = token.slice(1);
+            if (!tagToken) return true;
+            const inTags = itemTagNames.some((t) => t.includes(tagToken));
+            if (inTags) score += 15;
+            return inTags;
+          }
+
+          const inTitle = title.includes(token);
+          const inCode = code.includes(token);
+          const inContent = content.includes(token);
+          const inCheatsheet = cheatsheetContent.includes(token);
+          const inDesc = desc.includes(token);
+          const inCreatedAt = createdAt.includes(token);
+          const inUrl = url.includes(token) || domain.includes(token);
+
+          if (inTitle) score += 12;
+          if (inCode) score += 7;
+          if (inContent) score += 5;
+          if (inCheatsheet) score += 5;
+          if (inDesc) score += 3;
+          if (inCreatedAt) score += 3;
+          if (inUrl) score += 2;
+
+          return (
+            inTitle ||
+            inCode ||
+            inContent ||
+            inCheatsheet ||
+            inDesc ||
+            inCreatedAt ||
+            inUrl
+          );
+        });
+
+        return { item, score, matchesAllTokens };
+      })
+      .filter((entry) => entry.matchesAllTokens)
+      .sort((a, b) => b.score - a.score)
+      .map((entry) => entry.item);
+  },
+
+  sortItems(items, sortBy) {
     return [...items].sort((a, b) => {
-      if (sortBy === "title_asc") {
+      if (sortBy === "title_asc")
         return (a.title || "").localeCompare(b.title || "", "fa");
-      }
+
+      if (sortBy === "title_desc")
+        return (b.title || "").localeCompare(a.title || "", "fa");
 
       switch (sortBy) {
         case "created_desc":

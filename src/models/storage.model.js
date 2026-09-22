@@ -19,14 +19,34 @@ function extractDomain(url) {
 }
 
 /**
+ * Base Entity Normalizer to ensure structural consistency across all schemas
+ */
+function normalizeBaseEntity(data = {}, defaultTitle = "Untitled") {
+  return {
+    id: String(data.id || generateId()),
+    title: data.title || defaultTitle,
+    category: data.category || "general",
+    pinned: Boolean(data.pinned || data.isFavorite || data.isPinned),
+    tagIds: Array.isArray(data.tagIds)
+      ? data.tagIds.map((t) => (typeof t === "object" ? t.id : String(t)))
+      : [],
+    createdAt: data.createdAt || todayISO(),
+    updatedAt: data.updatedAt || todayISO(),
+  };
+}
+
+/**
  * Tag Entity Normalizer
- * entityType: "notes" | "snippets" | "bookmarks" | "cheatsheets" | null
  */
 export function normalizeTag(data = {}) {
   return {
     id: String(data.id || generateId()),
     name: data.name ? String(data.name).trim() : "Untitled Tag",
-    entityType: data.entityType || null,
+    entityTypes: Array.isArray(data.entityTypes)
+      ? data.entityTypes
+      : data.entityType
+        ? [...data.entityType]
+        : [],
   };
 }
 
@@ -34,17 +54,10 @@ export function normalizeTag(data = {}) {
  * Note Entity Normalizer
  */
 export function normalizeNote(data = {}) {
+  const base = normalizeBaseEntity(data, "Untitled Note");
   return {
-    id: String(data.id || generateId()),
-    title: data.title || "Untitled Note",
+    ...base,
     content: data.content || "",
-    category: data.category || "general",
-    pinned: Boolean(data.pinned),
-    tagIds: Array.isArray(data.tagIds)
-      ? data.tagIds.map((t) => (typeof t === "object" ? t.id : String(t)))
-      : [],
-    createdAt: data.createdAt || todayISO(),
-    updatedAt: data.updatedAt || todayISO(),
   };
 }
 
@@ -52,18 +65,12 @@ export function normalizeNote(data = {}) {
  * Code Snippet Entity Normalizer
  */
 export function normalizeSnippet(data = {}) {
+  const base = normalizeBaseEntity(data, "Untitled Snippet");
   return {
-    id: String(data.id || generateId()),
-    title: data.title || "Untitled Snippet",
+    ...base,
     description: data.description || "",
     code: data.code || "",
     category: data.category || "html",
-    pinned: Boolean(data.pinned || data.isFavorite),
-    tagIds: Array.isArray(data.tagIds)
-      ? data.tagIds.map((t) => (typeof t === "object" ? t.id : String(t)))
-      : [],
-    createdAt: data.createdAt || todayISO(),
-    updatedAt: data.updatedAt || todayISO(),
   };
 }
 
@@ -71,22 +78,15 @@ export function normalizeSnippet(data = {}) {
  * Bookmark Entity Normalizer
  */
 export function normalizeBookmark(data = {}) {
+  const base = normalizeBaseEntity(data, "Untitled Bookmark");
   const url = data.url || "";
   const domain = data.domain || extractDomain(url);
 
   return {
-    id: String(data.id || generateId()),
-    title: data.title || "Untitled Bookmark",
+    ...base,
     url: url,
     domain: domain,
     description: data.description || "",
-    category: data.category || "general",
-    pinned: Boolean(data.pinned || data.isPinned),
-    tagIds: Array.isArray(data.tagIds)
-      ? data.tagIds.map((t) => (typeof t === "object" ? t.id : String(t)))
-      : [],
-    createdAt: data.createdAt || todayISO(),
-    updatedAt: data.updatedAt || todayISO(),
   };
 }
 
@@ -94,12 +94,10 @@ export function normalizeBookmark(data = {}) {
  * CheatSheet Entity Normalizer
  */
 export function normalizeCheatSheet(data = {}) {
+  const base = normalizeBaseEntity(data, "Untitled CheatSheet");
   return {
-    id: String(data.id || generateId()),
-    title: data.title || "Untitled CheatSheet",
+    ...base,
     description: data.description || "",
-    category: data.category || "general",
-    pinned: Boolean(data.pinned),
     items: Array.isArray(data.items)
       ? data.items.map((item) => ({
           id: String(item.id || generateId()),
@@ -108,13 +106,19 @@ export function normalizeCheatSheet(data = {}) {
           description: item.description || "",
         }))
       : [],
-    tagIds: Array.isArray(data.tagIds)
-      ? data.tagIds.map((t) => (typeof t === "object" ? t.id : String(t)))
-      : [],
-    createdAt: data.createdAt || todayISO(),
-    updatedAt: data.updatedAt || todayISO(),
   };
 }
+
+/**
+ * Registry of entity normalizers for scalable processing
+ */
+const ENTITY_NORMALIZERS = {
+  tags: normalizeTag,
+  notes: normalizeNote,
+  snippets: normalizeSnippet,
+  bookmarks: normalizeBookmark,
+  cheatsheets: normalizeCheatSheet,
+};
 
 /**
  * Save State Structure to LocalStorage
@@ -146,14 +150,14 @@ export function loadFromStorage() {
 
     const data = JSON.parse(raw);
 
-    return {
-      version: STORAGE_VERSION,
-      tags: (data.tags || []).map(normalizeTag),
-      notes: (data.notes || []).map(normalizeNote),
-      snippets: (data.snippets || []).map(normalizeSnippet),
-      bookmarks: (data.bookmarks || []).map(normalizeBookmark),
-      cheatsheets: (data.cheatsheets || []).map(normalizeCheatSheet),
-    };
+    const result = { version: STORAGE_VERSION };
+
+    Object.keys(ENTITY_NORMALIZERS).forEach((key) => {
+      const normalizer = ENTITY_NORMALIZERS[key];
+      result[key] = (data[key] || []).map(normalizer);
+    });
+
+    return result;
   } catch (error) {
     console.error("Failed to load mind repository state:", error);
     return null;
