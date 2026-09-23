@@ -812,7 +812,7 @@ export const FILTER_OPTIONS_BY_TAB = {
     {
       value: "unpinned",
       title: "Unpinned Only",
-      icon: "ti ti-note text-slate-500/80",
+      icon: "ti ti-pin text-slate-500/80",
       class: "bg-slate-500/10 text-slate-500/80 border-slate-500/20",
     },
   ],
@@ -824,10 +824,16 @@ export const FILTER_OPTIONS_BY_TAB = {
       class: "bg-emerald-500/10 text-emerald-500/80 border-emerald-500/20",
     },
     {
-      value: "favorites",
-      title: "Favorites Only",
-      icon: "ti ti-star text-yellow-500/80",
+      value: "pinned",
+      title: "Pinned Only",
+      icon: "ti ti-pinned text-yellow-500/80",
       class: "bg-yellow-500/10 text-yellow-500/80 border-yellow-500/20",
+    },
+    {
+      value: "unpinned",
+      title: "Unpinned Only",
+      icon: "ti ti-pin text-slate-500/80",
+      class: "bg-slate-500/10 text-slate-500/80 border-slate-500/20",
     },
   ],
   bookmarks: [
@@ -837,6 +843,18 @@ export const FILTER_OPTIONS_BY_TAB = {
       icon: "ti ti-stack-2 text-violet-500/80",
       class: "bg-violet-500/10 text-violet-500/80 border-violet-500/20",
     },
+    {
+      value: "pinned",
+      title: "Pinned Only",
+      icon: "ti ti-pinned text-yellow-500/80",
+      class: "bg-yellow-500/10 text-yellow-500/80 border-yellow-500/20",
+    },
+    {
+      value: "unpinned",
+      title: "Unpinned Only",
+      icon: "ti ti-pin text-slate-500/80",
+      class: "bg-slate-500/10 text-slate-500/80 border-slate-500/20",
+    },
   ],
   cheatsheets: [
     {
@@ -844,6 +862,18 @@ export const FILTER_OPTIONS_BY_TAB = {
       title: "All CheatSheets",
       icon: "ti ti-stack-2 text-pink-500/80",
       class: "bg-pink-500/10 text-pink-500/80 border-pink-500/20",
+    },
+    {
+      value: "pinned",
+      title: "Pinned Only",
+      icon: "ti ti-pinned text-yellow-500/80",
+      class: "bg-yellow-500/10 text-yellow-500/80 border-yellow-500/20",
+    },
+    {
+      value: "unpinned",
+      title: "Unpinned Only",
+      icon: "ti ti-pin text-slate-500/80",
+      class: "bg-slate-500/10 text-slate-500/80 border-slate-500/20",
     },
   ],
 };
