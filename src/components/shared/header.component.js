@@ -2,7 +2,7 @@ export const HeaderComponent = {
   render() {
     return `
       <header class="mb-8 flex flex-row gap-4 sm:mb-12 justify-between">
-        <div class="flex min-w-0 items-center gap-3">
+        <div class="flex min-w-0 items-center gap-4">
           <button
             id="menu-toggle"
             class="hidden h-10 w-10 flex-row items-center justify-center rounded-xl border border-border bg-surface text-color transition cursor-pointer hover:bg-slate-600/10 lg:flex shadow-sm"
