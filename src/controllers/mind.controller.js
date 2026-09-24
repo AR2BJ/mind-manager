@@ -568,16 +568,16 @@ export const MindController = {
 
         if (tabName === "safeguard") {
           btnSafeguard.className =
-            "flex-1 py-2 text-xs font-bold rounded-lg bg-brand text-white transition cursor-pointer";
+            "flex-1 py-2 text-xs font-bold rounded-lg bg-brand text-white transition cursor-pointer flex justify-center items-center";
           btnShortcuts.className =
-            "flex-1 py-2 text-xs font-bold rounded-lg text-secondary hover:text-color transition cursor-pointer";
+            "flex-1 py-2 text-xs font-bold rounded-lg text-secondary hover:text-color transition cursor-pointer flex justify-center items-center";
           contentSafeguard?.classList.remove("hidden");
           contentShortcuts?.classList.add("hidden");
         } else if (tabName === "shortcuts") {
           btnShortcuts.className =
-            "flex-1 py-2 text-xs font-bold rounded-lg bg-brand text-white transition cursor-pointer";
+            "flex-1 py-2 text-xs font-bold rounded-lg bg-brand text-white transition cursor-pointer flex justify-center items-center";
           btnSafeguard.className =
-            "flex-1 py-2 text-xs font-bold rounded-lg text-secondary hover:text-color transition cursor-pointer";
+            "flex-1 py-2 text-xs font-bold rounded-lg text-secondary hover:text-color transition cursor-pointer flex justify-center items-center";
           contentShortcuts?.classList.remove("hidden");
           contentSafeguard?.classList.add("hidden");
         }

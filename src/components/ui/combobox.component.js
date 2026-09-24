@@ -438,7 +438,7 @@ export class ComboboxComponent {
 
     this.elements.dropdown.innerHTML = `
       <div
-        class="px-3.5 py-3 text-xs text-muted text-center flex items-center justify-center gap-1 select-none"
+        class="px-3.5 py-3 text-xs lg:text-sm text-muted text-center flex items-center justify-center gap-1 select-none"
       >
         <i class="ti ti-info-circle text-brand/60"></i>
         <span>${message}</span>

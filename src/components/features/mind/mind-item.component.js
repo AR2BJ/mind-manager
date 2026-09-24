@@ -34,9 +34,9 @@ export const MindItemComponent = {
 
     return `
       <span
-        class="inline-flex items-center gap-1 rounded-md border ${catData.class} px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+        class="h-5.5 inline-flex items-center gap-1 rounded-md border ${catData.class} px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
       >
-        <i class="${iconClass} text-xs lg:text-sm pb-0.5"></i>
+        <i class="${iconClass} text-[10px] lg:text-xs pb-px"></i>
         <span>${catData.name}</span>
       </span>
     `;
@@ -56,9 +56,9 @@ export const MindItemComponent = {
           .map(
             (tag) => `
               <span
-                class="inline-flex items-center gap-1 rounded-md bg-surface-3/50 px-2 py-0.5 text-xs text-secondary/80 border border-border/30"
+                class="h-5.5 inline-flex items-center gap-1 rounded-md bg-surface-3/50 px-2 py-0.5 text-xs text-secondary/80 border border-border/30"
               >
-                <i class="ti ti-tag pb-0.5 text-xs lg:text-sm"></i>
+                <i class="ti ti-tag text-[10px] lg:text-xs pb-px"></i>
                 <span>${tag.name}</span>
               </span>
             `,
@@ -196,9 +196,9 @@ export const MindItemComponent = {
               ${
                 note.pinned
                   ? `<span
-                      class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
+                      class="h-5.5 inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
                     >
-                      <i class="ti ti-pinned-filled text-[11px]"></i> Pinned
+                      <i class="ti ti-pinned-filled text-[10px] lg:text-xs pb-px"></i> Pinned
                     </span>`
                   : ""
               }
@@ -278,7 +278,22 @@ export const MindItemComponent = {
         <div class="flex items-start justify-between gap-3">
           <div class="flex flex-col min-w-0 w-full gap-1.5">
             <div class="flex items-center gap-2 flex-wrap">
-              ${categoryBadge} ${tagIdsHtml}
+              ${categoryBadge}
+              
+              ${
+                snippet.pinned
+                  ? `<span
+                      class="h-5.5 inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
+                    >
+                      <i
+                        class="ti ti-pinned-filled text-[10px] lg:text-xs pb-px"
+                      ></i>
+                      Pinned
+                    </span>`
+                  : ""
+              }
+              
+              ${tagIdsHtml}
             </div>
 
             <h3 class="text-base font-bold mt-1 text-color wrap-break-word">
@@ -426,9 +441,9 @@ export const MindItemComponent = {
               ${
                 bookmark.pinned
                   ? `<span
-                      class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
+                      class="h-5.5 inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
                     >
-                      <i class="ti ti-pinned-filled text-[11px]"></i> Pinned
+                      <i class="ti ti-pinned-filled text-[10px] lg:text-xs pb-px"></i> Pinned
                     </span>`
                   : ""
               }
@@ -500,9 +515,9 @@ export const MindItemComponent = {
               ${
                 cheatSheet.pinned
                   ? `<span
-                      class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
+                      class="h-5.5 inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
                     >
-                      <i class="ti ti-pinned-filled text-[11px]"></i> Pinned
+                      <i class="ti ti-pinned-filled text-[10px] lg:text-xs pb-px"></i> Pinned
                     </span>`
                   : ""
               }

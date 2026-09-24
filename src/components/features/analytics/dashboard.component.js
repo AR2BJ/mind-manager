@@ -204,7 +204,7 @@ export const DashboardComponent = {
           >
             <div>
               <h4 class="text-lg font-bold text-color flex items-center gap-2">
-                <i class="ti ti-chart-dots-3 text-brand text-xl"></i>
+                <i class="ti ti-affiliate text-brand text-xl"></i>
                 Execution Velocity & Heatmap
               </h4>
               <p class="text-xs text-secondary mt-1">
@@ -491,9 +491,9 @@ export const DashboardComponent = {
 
     return `
         <span
-          class="inline-flex items-center gap-1 rounded-md border ${catData.class} px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+          class="h-5.5 inline-flex items-center gap-1 rounded-md border ${catData.class} px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
         >
-          <i class="${iconClass} text-xs lg:text-sm pb-0.5"></i>
+          <i class="${iconClass} text-[10px] lg:text-xs pb-px"></i>
           <span>${catData.name}</span>
         </span>
       `;
@@ -510,9 +510,9 @@ export const DashboardComponent = {
           .map(
             (tag) => `
               <span
-                class="inline-flex items-center gap-1 rounded-md bg-surface-3/50 px-2 py-0.5 text-xs text-secondary/80 border border-border/30"
+                class="h-5.5 inline-flex items-center gap-1 rounded-md bg-surface-3/50 px-2 py-0.5 text-xs text-secondary/80 border border-border/30"
               >
-                <i class="ti ti-tag text-xs lg:text-sm pb-0.5"></i>
+                <i class="ti ti-tag text-[10px] lg:text-xs pb-px"></i>
                 <span>${tag.name}</span>
               </span>
             `,
@@ -526,9 +526,9 @@ export const DashboardComponent = {
     if (!pinned) return "";
     return `
       <span
-        class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
+        class="h-5.5 inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400"
       >
-        <i class="ti ti-pinned-filled text-[11px]"></i> Pinned
+        <i class="ti ti-pinned-filled text-[10px] lg:text-xs pb-px"></i> Pinned
       </span>
     `;
   },
@@ -724,7 +724,7 @@ export const DashboardComponent = {
                 <span
                   class="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 uppercase tracking-wider"
                 >
-                  <i class="ti ti-world text-[10px]"></i> ${
+                  <i class="ti ti-world text-[10px] lg:text-xs pb-px"></i> ${
                     bookmark.domain || "link"
                   }
                 </span>
@@ -788,7 +788,7 @@ export const DashboardComponent = {
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2 mb-1.5">
                 <span
-                  class="inline-flex items-center gap-1 rounded-md border border-border/40 bg-surface px-2 py-0.5 text-[10px] font-bold text-secondary"
+                  class="h-5.5 inline-flex items-center gap-1 rounded-md border border-border/40 bg-surface px-2 py-0.5 text-[10px] font-bold text-secondary"
                 >
                   ${itemCount} Items
                 </span>

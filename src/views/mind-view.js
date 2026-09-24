@@ -53,7 +53,7 @@ export const MindView = {
             <span
               class="absolute inset-y-0 left-0 flex items-center ps-3.5 pointer-events-none text-muted"
             >
-              <i class="ti ti-search"></i>
+              <i class="ti ti-search text-lg"></i>
             </span>
             <input
               type="text"

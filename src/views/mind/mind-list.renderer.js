@@ -61,7 +61,7 @@ export function renderMindList(items, activeTab = "notes") {
       <div
         class="min-h-72 bg-surface border border-dashed border-border rounded-2xl p-12 text-center flex flex-col items-center justify-center"
       >
-        <div class="text-6xl mb-4 text-brand/70">${currentEmpty.icon}</div>
+        <div class="text-6xl mb-2 text-brand/70">${currentEmpty.icon}</div>
         <h2 class="text-xl font-bold text-color">${currentEmpty.title}</h2>
         <p class="mt-2 text-sm text-secondary max-w-sm mx-auto">
           ${currentEmpty.description}
@@ -113,7 +113,7 @@ export function renderMindList(items, activeTab = "notes") {
           <span
             class="inline-flex transition duration-300 group-[.is-collapsed]:rotate-180"
           >
-            <i class="ti ti-chevron-down text-[10px] text-muted"></i>
+            <i class="ti ti-chevron-down text-[11px] lg:text-xs text-muted"></i>
           </span>
         </button>
       </div>
