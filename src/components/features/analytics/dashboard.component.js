@@ -218,7 +218,7 @@ export const DashboardComponent = {
                 class="sm:hidden inline-flex items-center justify-center h-8 w-8 rounded-lg border border-border bg-surface text-secondary hover:text-color transition shadow-sm cursor-pointer"
                 aria-label="Open view menu"
               >
-                <i class="ti ti-ellipsis-vertical text-lg"></i>
+                <i class="ti ti-dots-vertical text-lg"></i>
               </button>
 
               <div
