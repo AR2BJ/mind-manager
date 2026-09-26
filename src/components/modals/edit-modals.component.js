@@ -124,7 +124,7 @@ export const EditModalsComponent = {
               type="button"
               class="w-8 h-8 lg:w-9 lg:h-9 rounded-lg lg:rounded-xl bg-surface-2 hover:bg-red-600/10 border border-border text-secondary hover:text-color flex items-center justify-center transition cursor-pointer shrink-0"
             >
-              <i class="ti ti-x text-xl"></i>
+              <i class="ti ti-x text-sm lg:text-base"></i>
             </button>
           </div>
 

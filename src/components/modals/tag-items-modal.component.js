@@ -40,7 +40,7 @@ export const TagItemsModalComponent = {
               type="button"
               class="w-8 h-8 rounded-lg bg-surface-2 hover:bg-red-500/10 border border-border text-secondary hover:text-color flex items-center justify-center transition cursor-pointer shrink-0"
             >
-              <i class="ti ti-x text-lg"></i>
+              <i class="ti ti-x text-sm lg:text-base"></i>
             </button>
           </div>
 

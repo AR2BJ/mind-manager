@@ -433,7 +433,7 @@ export class AutocompleteComponent {
 
     this.elements.dropdown.innerHTML = `
       <div
-        class="px-3.5 py-3  text-xs lg:text-sm text-muted text-center flex items-center justify-center gap-1 select-none"
+        class="px-3.5 py-3 text-xs lg:text-sm text-muted text-center flex items-center justify-center gap-1 select-none"
       >
         <i class="ti ti-info-circle text-brand/60"></i>
         <span>${message}</span>
@@ -552,7 +552,7 @@ export class AutocompleteComponent {
             type="button"
             class="remove-chip-btn hover:text-red-500 transition cursor-pointer flex items-center justify-center"
           >
-            <i class="ti ti-x text-[11px] pb-0.5"></i>
+            <i class="ti ti-x text-[11px] pb-px"></i>
           </button>
         `;
       } else {
